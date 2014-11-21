@@ -5,9 +5,17 @@
 //
 
 #import <Availability.h>
-
+#define SCREENWIDTH     [UIScreen mainScreen].bounds.size.width
+#define SCREENHEIGHT    [UIScreen mainScreen].bounds.size.height
+#define kAppKey         @"1548203762"
+#define kRedirectURI    @"https://api.weibo.com/oauth2/default.html"
+#define AppKey @"801551850"
+#define AppSecret @"c3e876c155c4c68d5eadfe8778479c86"
+#define APPURL @"http://www.baidiu.com"
 #ifndef __IPHONE_3_0
 #warning "This project uses features only available in iOS SDK 3.0 and later."
+
+
 #endif
 
 #ifdef __OBJC__

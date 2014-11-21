@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="6250" systemVersion="14A389" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6244"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="CollectionsViewController">
+            <connections>
+                <outlet property="searchBar" destination="L7o-yb-EZm" id="JLU-Tq-Wgu"/>
+                <outlet property="tableViewList" destination="kjZ-qt-9lz" id="Gan-eW-Srq"/>
+                <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="i5M-Pr-FkT">
+            <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <searchBar contentMode="redraw" translatesAutoresizingMaskIntoConstraints="NO" id="L7o-yb-EZm">
+                    <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                    <textInputTraits key="textInputTraits"/>
+                    <connections>
+                        <outlet property="delegate" destination="-1" id="qbz-Qo-dPK"/>
+                    </connections>
+                </searchBar>
+                <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" translatesAutoresizingMaskIntoConstraints="NO" id="kjZ-qt-9lz">
+                    <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    <connections>
+                        <outlet property="dataSource" destination="-1" id="oJ2-oj-fSC"/>
+                        <outlet property="delegate" destination="-1" id="JAi-3L-csi"/>
+                    </connections>
+                </tableView>
+            </subviews>
+            <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+            <constraints>
+                <constraint firstItem="kjZ-qt-9lz" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="9qK-6J-gXn"/>
+                <constraint firstAttribute="trailing" secondItem="L7o-yb-EZm" secondAttribute="trailing" id="CJD-17-WyB"/>
+                <constraint firstItem="kjZ-qt-9lz" firstAttribute="top" secondItem="L7o-yb-EZm" secondAttribute="bottom" id="NrF-ik-FKB"/>
+                <constraint firstAttribute="bottom" secondItem="kjZ-qt-9lz" secondAttribute="bottom" id="QPi-yj-365"/>
+                <constraint firstAttribute="trailing" secondItem="kjZ-qt-9lz" secondAttribute="trailing" constant="-9" id="TVw-K8-AGP"/>
+                <constraint firstItem="L7o-yb-EZm" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="66" id="XHm-6J-FWO"/>
+                <constraint firstItem="L7o-yb-EZm" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="vAf-d8-K8t"/>
+            </constraints>
+            <variation key="default">
+                <mask key="subviews">
+                    <exclude reference="L7o-yb-EZm"/>
+                    <exclude reference="kjZ-qt-9lz"/>
+                </mask>
+                <mask key="constraints">
+                    <exclude reference="CJD-17-WyB"/>
+                    <exclude reference="XHm-6J-FWO"/>
+                    <exclude reference="vAf-d8-K8t"/>
+                    <exclude reference="9qK-6J-gXn"/>
+                    <exclude reference="NrF-ik-FKB"/>
+                    <exclude reference="QPi-yj-365"/>
+                    <exclude reference="TVw-K8-AGP"/>
+                </mask>
+            </variation>
+            <variation key="widthClass=compact">
+                <mask key="subviews">
+                    <include reference="L7o-yb-EZm"/>
+                    <include reference="kjZ-qt-9lz"/>
+                </mask>
+                <mask key="constraints">
+                    <include reference="CJD-17-WyB"/>
+                    <include reference="XHm-6J-FWO"/>
+                    <include reference="vAf-d8-K8t"/>
+                    <include reference="9qK-6J-gXn"/>
+                    <include reference="NrF-ik-FKB"/>
+                    <include reference="QPi-yj-365"/>
+                    <include reference="TVw-K8-AGP"/>
+                </mask>
+            </variation>
+        </view>
+    </objects>
+</document>
