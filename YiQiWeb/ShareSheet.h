@@ -12,8 +12,14 @@
 #import "WeiboApi.h"
 #import "AppDelegate.h"
 #import "WbApi.h"
-@interface KZJShareSheet : UIView<WeiboAuthDelegate,WeiboRequestDelegate>
+#import "Collection.h"
+
+#import "SqlServer.h"
+@interface ShareSheet : UIView<WeiboAuthDelegate,WeiboRequestDelegate>
+
 @property(strong,nonatomic)UIWebView*webview;
-+(KZJShareSheet*)shareWeiboView;
+@property(strong,nonatomic)Collection*item;
+@property(strong,nonatomic)NSData*imageData;
++(ShareSheet*)shareWeiboView;
 +(UIView*)shareCardView;
 @end

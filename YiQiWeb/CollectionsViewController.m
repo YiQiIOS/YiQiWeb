@@ -32,6 +32,7 @@
     
     
     UIBarButtonItem *backbutton = [[UIBarButtonItem alloc] initWithTitle:@"返回" style:UIBarButtonItemStyleBordered target:self action:@selector(goback)];
+    backbutton.tintColor = [UIColor whiteColor];
     self.navigationItem.leftBarButtonItem = backbutton;
     
     collectionList = [[NSMutableArray alloc] init];
@@ -197,6 +198,7 @@
     Collection *info = [collectionList objectAtIndex:indexPath.row];
     GoViewController *viewController = [[GoViewController alloc] initWithNibName:@"GoViewController" bundle:nil];
     viewController.cUrl = info.url;
+    
     [self.navigationController pushViewController:viewController animated:YES];
 }
 

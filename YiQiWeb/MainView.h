@@ -8,7 +8,10 @@
 
 #import <UIKit/UIKit.h>
 #import "UIImage+Redraw.h"
-#import "KZJShareSheet.h"
-@interface MainView : UIViewController<UIWebViewDelegate,UIActionSheetDelegate>
+#import "ShareSheet.h"
+#import "ShareViewController.h"
+#import "BaseAnimation.h"
+#import "SlideAnimation.h"
+@interface MainView : UIViewController<UIWebViewDelegate,UIActionSheetDelegate,UIViewControllerTransitioningDelegate,UINavigationControllerDelegate>
 
 @end

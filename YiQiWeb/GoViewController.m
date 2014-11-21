@@ -22,6 +22,10 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
+    UIButton*btnback = [UIButton buttonWithType:UIButtonTypeCustom frame:CGRectMake(0, 0, 40, 22) backgroundImage:nil title:@"返回" target:self action:@selector(back)];
+    [btnback setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    UIBarButtonItem*leftItem = [[UIBarButtonItem alloc]initWithCustomView:btnback];
+    self.navigationItem.leftBarButtonItem = leftItem;
     
     UIWebView*webview = [[UIWebView alloc]initWithFrame:CGRectMake(0, 0, 320, [[UIScreen mainScreen] bounds].size.height)];
     webview.tag = 1000;
@@ -31,7 +35,7 @@
     [self.view addSubview:webview];
     
     UIButton*btnMore = [UIButton buttonWithType:UIButtonTypeCustom frame:CGRectMake(0, 0, 40, 22) backgroundImage:nil title:@"更多" target:self action:@selector(more)];
-    [btnMore setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [btnMore setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     btnMore.alpha = 0.4;
     UIBarButtonItem*rightItem = [[UIBarButtonItem alloc]initWithCustomView:btnMore];
     rightItem.tag = 1100;
@@ -51,13 +55,9 @@
     {
         //        NSLog(@"1213323");
         UIButton*btnback = [UIButton buttonWithType:UIButtonTypeCustom frame:CGRectMake(0, 0, 40, 22) backgroundImage:nil title:@"返回" target:self action:@selector(back)];
-        [btnback setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        [btnback setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         UIBarButtonItem*leftItem = [[UIBarButtonItem alloc]initWithCustomView:btnback];
         self.navigationItem.leftBarButtonItem = leftItem;
-    }else
-    {
-        //        self.navigationController.navigationBarHidden = YES;
-        self.navigationItem.leftBarButtonItem = nil;
     }
     UIActivityIndicatorView*indicator = (UIActivityIndicatorView*)[self.view viewWithTag:1001];
     [indicator stopAnimating];
@@ -147,15 +147,20 @@
     UIButton*btn = (UIButton*)moreItem.customView;
     btn.alpha = 0.4;
     [moreItem setEnabled:NO];
+    self.title =@"";
     
 }
 //返回按钮触发事件
 -(void)back
 {
+    NSLog(@"31");
     UIWebView*webView = (UIWebView*)[self.view viewWithTag:1000];
     if (webView.canGoBack)
     {
         [webView goBack];
+    }else
+    {
+        [self.navigationController popViewControllerAnimated:YES];
     }
 }
 //更多按钮触发事件

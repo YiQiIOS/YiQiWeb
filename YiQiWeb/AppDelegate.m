@@ -7,17 +7,16 @@
 //
 
 #import "AppDelegate.h"
-
+#import "SqlServer.h"
 @implementation AppDelegate
 
-@synthesize managedObjectContext = _managedObjectContext;
-@synthesize managedObjectModel = _managedObjectModel;
-@synthesize persistentStoreCoordinator = _persistentStoreCoordinator;
-@synthesize shareKind,shareContent,shareUrl;
-
+@synthesize shareKind,shareContent,imageData,shareUrl,imageUrl;
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    [NSThread sleepForTimeInterval:1.0];
+    [UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleLightContent;
+    
+    
+//    [NSThread sleepForTimeInterval:1.0];
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     // Override point for customization after application launch.
     self.window.backgroundColor = [UIColor whiteColor];
@@ -26,13 +25,15 @@
     self.window.rootViewController = nav_mainView;
     [self.window makeKeyAndVisible];
     
-    NSUserDefaults*user = [NSUserDefaults standardUserDefaults];
-//    if([user objectForKey:@"TencentToken"])
-//    {
-//        NSLog(@"313244");
-//        
-//        [[WeiboApi alloc]loginWithAccesstoken:[user objectForKey:@"TencentToken"] andOpenId:[user objectForKey:@"TencentOpenID"] andExpires:1000 andRefreshToken:nil andDelegate:self];
-//    }
+    SqlServer *sqlDbInstance = [SqlServer sharedInstance];
+    [sqlDbInstance openDB];
+    NSString *sqlCreateTable = @"CREATE TABLE IF NOT EXISTS COLLECTIONINFO(ID INTEGER PRIMARY KEY AUTOINCREMENT,TITLE TEXT,URL TEXT,COLLECTIONDATE TEXT,IMAGEDATA BLOB) ";
+    [sqlDbInstance exec:sqlCreateTable];
+    
+    int cacheSizeMemory = 4*1024*1024; // 4MB
+    int cacheSizeDisk = 32*1024*1024; // 32MB
+    NSURLCache *sharedCache = [[NSURLCache alloc] initWithMemoryCapacity:cacheSizeMemory diskCapacity:cacheSizeDisk diskPath:@"nsurlcache"];
+    [NSURLCache setSharedURLCache:sharedCache];
     
     [[NSNotificationCenter defaultCenter]removeObserver:self name:@"shareKind" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(shareKind:) name:@"shareKind" object:nil];
@@ -42,37 +43,92 @@
 {
     NSDictionary*dict = [notif userInfo];
     shareKind = [dict objectForKey:@"shareKind"];
-    shareUrl = [dict objectForKey:@"url"];
-//    NSLog(@"%@",shareKind);
+    shareContent = [dict objectForKey:@"content"];
+    imageData = [dict objectForKey:@"imageData"];
+    shareUrl = [NSString stringWithFormat:@"%@",[dict objectForKey:@"shareUrl"]];
+    imageUrl = [dict objectForKey:@"imageUrl"];
+    NSLog(@"%@",shareContent);
 }
+
+//程序回调返回
 -(BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url
 {
     NSLog(@"2132213233434");
-    if ([shareKind isEqualToString:@"新浪"])
+    if ([shareKind isEqualToString:@"新浪微博"])
     {
         return [WeiboSDK handleOpenURL:url delegate:self];
+    }else if ([shareKind isEqualToString:@"QQ空间"])
+    {
+        return [TencentOAuth HandleOpenURL:url];
     }
-        return [[WbApi getWbApi]handleOpenURL:url];
-    return YES;
+    return [[WbApi getWbApi]handleOpenURL:url];
 }
 -(BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
 {
     NSLog(@"213233234525434");
-    if ([shareKind isEqualToString:@"新浪"])
+    if ([shareKind isEqualToString:@"新浪微博"])
     {
         return [WeiboSDK handleOpenURL:url delegate:self];
+    }else if ([shareKind isEqualToString:@"QQ空间"])
+    {
+        return [TencentOAuth HandleOpenURL:url];
     }
+    return [[WbApi getWbApi]handleOpenURL:url];
+}
+//QQ代理
+-(void)tencentDidLogout
+{
+    
+}
+-(void)tencentDidLogin
+{
+    [JDStatusBarNotification showWithStatus:@"正在努力发送中..." styleName:JDStatusBarStyleWarning];
+    [JDStatusBarNotification showActivityIndicator:YES indicatorStyle:UIActivityIndicatorViewStyleGray];
+    NSLog(@"2313");
+    NSString *utf8String = shareUrl;
+    NSMutableString*title = [[NSMutableString alloc]initWithString:shareContent];
+    NSRange range = NSMakeRange(shareContent.length-shareUrl.length, shareUrl.length);
+    [title deleteCharactersInRange:range];
+    NSString *description = shareContent;
+    NSLog(@"%@%@",shareUrl,imageUrl);
+    QQApiNewsObject *newsObj = [QQApiNewsObject
+                                objectWithURL:[NSURL URLWithString:utf8String]
+                                title:title
+                                description:description
+                                previewImageURL:[NSURL URLWithString:imageUrl]];
+    SendMessageToQQReq *req = [SendMessageToQQReq reqWithContent:newsObj];
+    //将内容分享到qzone
+    NSLog(@"%d",[QQApiInterface SendReqToQZone:req]);
+    
+    [[NSNotificationCenter defaultCenter]postNotificationName:@"sendSuccess" object:nil];
+    
+}
+-(void)tencentDidNotLogin:(BOOL)cancelled
+{
+    
+}
+-(void)tencentDidNotNetWork
+{
+    
+}
+-(BOOL)onTencentReq:(TencentApiReq *)req
+{
     return YES;
-        return [[WbApi getWbApi]handleOpenURL:url];
+}
+-(BOOL)onTencentResp:(TencentApiResp *)resp
+{
+    return YES;
 }
 //下面三个方法为新浪回调方法
+//收到微博的请求
 -(void)didReceiveWeiboRequest:(WBBaseRequest *)request
 {
     
 }
+//微博响应请求返回方法
 -(void)didReceiveWeiboResponse:(WBBaseResponse *)response
 {
-    NSLog(@"21323434");
+//    NSLog(@"21323434");
     if ([response isKindOfClass:WBAuthorizeResponse.class])
     {
         if (response.statusCode == WeiboSDKResponseStatusCodeSuccess )
@@ -84,38 +140,32 @@
             [user setObject:[(WBAuthorizeResponse *)response accessToken] forKey:@"SinaToken"];
             [user setObject:[(WBAuthorizeResponse *)response userID] forKey:@"SinaUserID"];
             [user synchronize];
-//            NSLog(@"%@",[(WBAuthorizeResponse *)response userID]);
-            
             
             [JDStatusBarNotification showWithStatus:@"正在努力发送中..." styleName:JDStatusBarStyleWarning];
             [JDStatusBarNotification showActivityIndicator:YES indicatorStyle:UIActivityIndicatorViewStyleGray];
             NSString *url;
             NSDictionary*params;
-//            if (message.length>0  && imageArr.count>1)
-//            {
-//                url = @"https://upload.api.weibo.com/2/statuses/upload.json";
-//                params=[NSDictionary dictionaryWithObjectsAndKeys:message,@"status",[imageArr objectAtIndex:0],@"pic",[NSString stringWithFormat:@"%d",visible],@"visible",nil];
-//            }
-//            else if(message.length>0)
-//            {
-                url = @"https://api.weibo.com/2/statuses/update.json";
-            NSLog(@"%@",shareUrl);
-                params=[NSDictionary dictionaryWithObjectsAndKeys:shareUrl,@"status",nil];
-//            }
+
+            url = @"https://upload.api.weibo.com/2/statuses/upload.json";
+//            NSLog(@"%@",shareContent);
+            params=@{@"status":shareContent,@"pic":imageData};
             
-            
-            [WBHttpRequest requestWithAccessToken:[[NSUserDefaults standardUserDefaults] objectForKey:@"Token"] url:url httpMethod:@"POST" params:params delegate:self withTag:@"1000"];
+            [WBHttpRequest requestWithAccessToken:[[NSUserDefaults standardUserDefaults] objectForKey:@"SinaToken"] url:url httpMethod:@"POST" params:params delegate:self withTag:@"1000"];
         }
     }
 }
+//请求返回数据加载完毕
 -(void)request:(WBHttpRequest *)request didFinishLoadingWithResult:(NSString *)result
 {
 //    NSLog(@"%@",result);
     if ([request.tag isEqualToString:@"1000"])
     {
-        [JDStatusBarNotification showWithStatus:@"发送成功" dismissAfter:1 styleName:@"JDStatusBarStyleSuccess"];
+//        [JDStatusBarNotification showWithStatus:@"发送成功" dismissAfter:1 styleName:@"JDStatusBarStyleSuccess"];
+
+        [[NSNotificationCenter defaultCenter]postNotificationName:@"sendSuccess" object:nil];
     }
 }
+//请求返回失败
 -(void)request:(WBHttpRequest *)request didFailWithError:(NSError *)error
 {
     if ([request.tag isEqualToString:@"1000"])
@@ -126,47 +176,34 @@
 
 
 //下面方法为腾讯微博回调方法
--(void)DidAuthFinished:(WeiboApi *)wbobj
+-(void)DidAuthFinished:(WeiboApiObject *)wbobj
 {
-    NSLog(@"2423");
     [JDStatusBarNotification showWithStatus:@"正在努力发送中..." styleName:JDStatusBarStyleWarning];
     [JDStatusBarNotification showActivityIndicator:YES indicatorStyle:UIActivityIndicatorViewStyleGray];
     
     [[NSUserDefaults standardUserDefaults]setObject:@"已登陆" forKey:@"腾讯登陆状态"];
     [[NSUserDefaults standardUserDefaults]synchronize];
-    
-//    NSUserDefaults*user = [NSUserDefaults standardUserDefaults];
-//    [user setObject:wbapi.accessToken forKey:@"TencentToken"];
-//    [user setObject:wbapi.openid forKey:@"TencentOpenID"];
-//    [user synchronize];
-    
-    NSMutableDictionary *params = [[NSMutableDictionary alloc]initWithObjectsAndKeys:@"json",@"format",shareUrl, @"content",nil];
-    [wbobj requestWithParams:params apiName:@"t/add" httpMethod:@"POST" delegate:self];
+    UIImage*image = [UIImage imageWithData:imageData];
+    NSMutableDictionary *params = [[NSMutableDictionary alloc]initWithObjectsAndKeys:@"json",@"format",shareContent, @"content",image,@"pic",nil];
+    [[WbApi getWbApi] requestWithParams:params apiName:@"t/add_pic" httpMethod:@"POST" delegate:self];
     
 }
+//腾讯微博请求数据返回方法
 -(void)didReceiveRawData:(NSData *)data reqNo:(int)reqno
 {
-    NSLog(@"2132");
-    [JDStatusBarNotification showWithStatus:@"发送成功" dismissAfter:1 styleName:@"JDStatusBarStyleSuccess"];
-    
-//    [[WbApi getWbApi]ref:self];
+//    [JDStatusBarNotification showWithStatus:@"发送成功" dismissAfter:1 styleName:@"JDStatusBarStyleSuccess"];
+    [[NSNotificationCenter defaultCenter]postNotificationName:@"sendSuccess" object:nil];
 }
-
+//腾讯微博错误返回方法
 -(void)didFailWithError:(NSError *)error reqNo:(int)reqno
 {
     NSLog(@"%@",error);
 }
-
-//-(void)DidAut
-//{
-//    [[NSUserDefaults standardUserDefaults]setObject:@"已登陆" forKey:@"腾讯登陆状态"];
-//    [[NSUserDefaults standardUserDefaults]synchronize];
-//    
-////    NSUserDefaults*user = [NSUserDefaults standardUserDefaults];
-////    [user setObject:wbapi.accessToken forKey:@"TencentToken"];
-////    [user setObject:wbapi.openid forKey:@"TencentOpenID"];
-////    [user synchronize];
-//}
+//应用收到内存警告时执行的方法。
+- (void)applicationDidReceiveMemoryWarning:(UIApplication *)application
+{
+    [[NSURLCache sharedURLCache] removeAllCachedResponses];
+}
 
 - (void)applicationWillResignActive:(UIApplication *)application
 {
@@ -193,96 +230,8 @@
 - (void)applicationWillTerminate:(UIApplication *)application
 {
     // Saves changes in the application's managed object context before the application terminates.
-    [self saveContext];
 }
 
-- (void)saveContext
-{
-    NSError *error = nil;
-    NSManagedObjectContext *managedObjectContext = self.managedObjectContext;
-    if (managedObjectContext != nil) {
-        if ([managedObjectContext hasChanges] && ![managedObjectContext save:&error]) {
-             // Replace this implementation with code to handle the error appropriately.
-             // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development. 
-            NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
-            abort();
-        } 
-    }
-}
-
-#pragma mark - Core Data stack
-
-// Returns the managed object context for the application.
-// If the context doesn't already exist, it is created and bound to the persistent store coordinator for the application.
-- (NSManagedObjectContext *)managedObjectContext
-{
-    if (_managedObjectContext != nil) {
-        return _managedObjectContext;
-    }
-    
-    NSPersistentStoreCoordinator *coordinator = [self persistentStoreCoordinator];
-    if (coordinator != nil) {
-        _managedObjectContext = [[NSManagedObjectContext alloc] init];
-        [_managedObjectContext setPersistentStoreCoordinator:coordinator];
-    }
-    return _managedObjectContext;
-}
-
-// Returns the managed object model for the application.
-// If the model doesn't already exist, it is created from the application's model.
-- (NSManagedObjectModel *)managedObjectModel
-{
-    if (_managedObjectModel != nil)
-    {
-        return _managedObjectModel;
-    }
-    NSURL *modelURL = [[NSBundle mainBundle] URLForResource:@"YiQiWeb" withExtension:@"momd"];
-    _managedObjectModel = [[NSManagedObjectModel alloc] initWithContentsOfURL:modelURL];
-    return _managedObjectModel;
-}
-
-// Returns the persistent store coordinator for the application.
-// If the coordinator doesn't already exist, it is created and the application's store added to it.
-- (NSPersistentStoreCoordinator *)persistentStoreCoordinator
-{
-    if (_persistentStoreCoordinator != nil) {
-        return _persistentStoreCoordinator;
-    }
-    
-    NSURL *storeURL = [[self applicationDocumentsDirectory] URLByAppendingPathComponent:@"YiQiWeb.sqlite"];
-    
-    NSError *error = nil;
-    _persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:[self managedObjectModel]];
-    if (![_persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:nil error:&error]) {
-        /*
-         Replace this implementation with code to handle the error appropriately.
-         
-         abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development. 
-         
-         Typical reasons for an error here include:
-         * The persistent store is not accessible;
-         * The schema for the persistent store is incompatible with current managed object model.
-         Check the error message to determine what the actual problem was.
-         
-         
-         If the persistent store is not accessible, there is typically something wrong with the file path. Often, a file URL is pointing into the application's resources directory instead of a writeable directory.
-         
-         If you encounter schema incompatibility errors during development, you can reduce their frequency by:
-         * Simply deleting the existing store:
-         [[NSFileManager defaultManager] removeItemAtURL:storeURL error:nil]
-         
-         * Performing automatic lightweight migration by passing the following dictionary as the options parameter:
-         @{NSMigratePersistentStoresAutomaticallyOption:@YES, NSInferMappingModelAutomaticallyOption:@YES}
-         
-         Lightweight migration will only work for a limited set of schema changes; consult "Core Data Model Versioning and Data Migration Programming Guide" for details.
-         
-         */
-        NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
-        abort();
-    }    
-    
-    return _persistentStoreCoordinator;
-}
 
 #pragma mark - Application's Documents directory
 

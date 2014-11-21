@@ -38,10 +38,20 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string></string>
+			<string>ibokan.YiQiWeb</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>wb801551850</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>ibokan.YiQiWeb</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>tencent222222</string>
 			</array>
 		</dict>
 	</array>
@@ -57,5 +67,7 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
 </dict>
 </plist>
