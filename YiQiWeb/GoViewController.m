@@ -41,6 +41,8 @@
     rightItem.tag = 1100;
     [rightItem setEnabled:NO];
     self.navigationItem.rightBarButtonItem= rightItem;
+    
+    item = [[Collection alloc] init];
 }
 
 //webview加载结束调用的代理

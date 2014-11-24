@@ -20,7 +20,10 @@
 #import <TencentOpenAPI/sdkdef.h>
 #import <TencentOpenAPI/TencentApiInterface.h>
 #import <TencentOpenAPI/TencentOAuthObject.h>
-@interface AppDelegate : UIResponder <UIApplicationDelegate,UIWebViewDelegate,WeiboSDKDelegate,WeiboAuthDelegate,WeiboRequestDelegate,WBHttpRequestDelegate,TencentSessionDelegate>
+#import <AVFoundation/AVFoundation.h>
+#import "Reachability.h"
+
+@interface AppDelegate : UIResponder <UIApplicationDelegate,UIWebViewDelegate,WeiboSDKDelegate,WeiboAuthDelegate,WeiboRequestDelegate,WBHttpRequestDelegate,TencentSessionDelegate,UIAlertViewDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
 @property(strong,nonatomic)NSString*shareKind;
@@ -28,5 +31,6 @@
 @property(strong,nonatomic)NSString*shareUrl;
 @property(strong,nonatomic)NSString*imageUrl;
 @property(strong,nonatomic)NSData*imageData;
+@property(strong,nonatomic)Reachability*reachability;
 
 @end

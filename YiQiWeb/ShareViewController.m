@@ -29,24 +29,26 @@
     UIBarButtonItem*rightItem = [[UIBarButtonItem alloc]initWithCustomView:btnShare];
     self.navigationItem.rightBarButtonItem= rightItem;
     
-    UITextView*textView = [[UITextView alloc]initWithFrame:CGRectMake(1, 65, SCREENWIDTH-2, SCREENHEIGHT-220-64)];
+    UITextView*textView = [[UITextView alloc]initWithFrame:CGRectMake(5, 80, SCREENWIDTH-10, SCREENHEIGHT-220-64)];
     textView.tag = 1000;
     self.automaticallyAdjustsScrollViewInsets = NO;
     textView.text = shareContent;
-//    textView.layer.borderWidth = 1;
+    textView.layer.borderWidth = 1;
     textView.delegate = self;
-//    textView.layer.borderColor = [UIColor blackColor].CGColor;
+    textView.layer.borderColor = [UIColor lightGrayColor].CGColor;
     textView.font = [UIFont systemFontOfSize:17];
     [textView becomeFirstResponder];
     [self.view addSubview:textView];
     
+    //测试文字高度
     NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc]init];
     paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
     NSDictionary *attributes = @{NSFontAttributeName:textView.font, NSParagraphStyleAttributeName:paragraphStyle.copy};
     CGRect rect = [textView.text boundingRectWithSize:CGSizeMake(textView.frame.size.width-10, textView.frame.size.height) options:NSStringDrawingUsesLineFragmentOrigin attributes:attributes context:nil];
     NSLog(@"%f",rect.size.height);
+    textView.frame = CGRectMake(5, 80, SCREENWIDTH-10, rect.size.height+120);
     
-    UIImageView*imageView = [[UIImageView alloc]initWithFrame:CGRectMake(10, rect.size.height+15, 90, 90)];
+    UIImageView*imageView = [[UIImageView alloc]initWithFrame:CGRectMake(10, rect.size.height+20, 90, 90)];
     imageView.tag = 1100;
     imageView.image = [UIImage imageWithData:imageData];
     [textView addSubview:imageView];
@@ -87,12 +89,15 @@
 }
 -(void)textViewDidChange:(UITextView *)textView
 {
+    
     UIImageView*image = (UIImageView*)[textView viewWithTag:1100];
     NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc]init];
     paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
     NSDictionary *attributes = @{NSFontAttributeName:textView.font, NSParagraphStyleAttributeName:paragraphStyle.copy};
     CGRect rect = [textView.text boundingRectWithSize:CGSizeMake(textView.frame.size.width-10, textView.frame.size.height) options:NSStringDrawingUsesLineFragmentOrigin attributes:attributes context:nil];
-    image.frame = CGRectMake(10, rect.size.height+15, 90, 90);
+    textView.frame = CGRectMake(5, 80, SCREENWIDTH-10, rect.size.height+120);
+    image.frame = CGRectMake(10, rect.size.height+20, 90, 90);
+    
 }
 
 //取消返回按钮

@@ -10,7 +10,7 @@
 #import "SqlServer.h"
 @implementation AppDelegate
 
-@synthesize shareKind,shareContent,imageData,shareUrl,imageUrl;
+@synthesize shareKind,shareContent,imageData,shareUrl,imageUrl,reachability;
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     [UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleLightContent;
@@ -35,10 +35,24 @@
     NSURLCache *sharedCache = [[NSURLCache alloc] initWithMemoryCapacity:cacheSizeMemory diskCapacity:cacheSizeDisk diskPath:@"nsurlcache"];
     [NSURLCache setSharedURLCache:sharedCache];
     
+    
+    //网络检测
+    [[NSNotificationCenter defaultCenter]removeObserver:self name:kReachabilityChangedNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:mainView selector:@selector(networkChange:) name:kReachabilityChangedNotification object:nil];
+    //以访问主机地址生成一个网络检测对象
+    reachability = [Reachability reachabilityWithHostName:@"www.apple.com"];
+    //开始检测
+    [reachability startNotifier];
+    
     [[NSNotificationCenter defaultCenter]removeObserver:self name:@"shareKind" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(shareKind:) name:@"shareKind" object:nil];
     return YES;
 }
+-(void)networkChange:(NSNotification*)notification
+{
+    NSLog(@"网络变化");
+}
+
 -(void)shareKind:(NSNotification*)notif
 {
     NSDictionary*dict = [notif userInfo];

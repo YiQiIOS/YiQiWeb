@@ -7,7 +7,6 @@
 //
 
 #import "ShareSheet.h"
-
 @implementation ShareSheet
 @synthesize webview,item,imageData;
 /*
@@ -32,97 +31,141 @@
         CGColorRef colorref1 = CGColorCreate(colorSpace,(CGFloat[]){ 0.447, 0.473, 0.518, 1 });
         
         view1 =[[ShareSheet alloc]initWithFrame:CGRectMake(0, 0, SCREENWIDTH, SCREENHEIGHT)];
-        UIView*view = [[UIView alloc]initWithFrame:CGRectMake(0, SCREENHEIGHT, SCREENWIDTH, 380)];
+        UIView*view = [[UIView alloc]initWithFrame:CGRectMake(0, SCREENHEIGHT, SCREENWIDTH, 375)];
 //        view.layer.cornerRadius = 8;
-        view.tag=1000;
+        view.tag=1200;
         
         view.layer.backgroundColor = colorref;
-        NSArray*titleArray = [NSArray arrayWithObjects:@"微信好友",@"朋友圈",@"QQ空间",@"腾讯微博",@"新浪微博",@"查看收藏",@"收藏",@"复制链接", nil];
-        UILabel*title = [[UILabel alloc]initWithFrame:CGRectMake(15, 10, 100, 25)];
+        NSArray*titleArray = [NSArray arrayWithObjects:@"微信好友",@"朋友圈",@"新浪微博",@"腾讯微博",@"QQ空间",@"收藏",@"复制链接",@"手电筒",@"扫一扫",@"查看收藏", nil];
+        UILabel*title = [[UILabel alloc]initWithFrame:CGRectMake(20, 10, 100, 25)];
         title.text = @"分享";
         [view addSubview:title];
-        UILabel*title1 = [[UILabel alloc]initWithFrame:CGRectMake(15, 210, 100, 25)];
+        UILabel*title1 = [[UILabel alloc]initWithFrame:CGRectMake(20, 165, 100, 25)];
         title1.text = @"其他";
         [view addSubview:title1];
-        UILabel*line = [[UILabel alloc]initWithFrame:CGRectMake(20, 40, SCREENWIDTH-40, 3)];
+        UILabel*line = [[UILabel alloc]initWithFrame:CGRectMake(20, 40, SCREENWIDTH-40, 1)];
         line.backgroundColor = [UIColor lightGrayColor];
         [view addSubview:line];
         
-        UILabel*line1 = [[UILabel alloc]initWithFrame:CGRectMake(20, 240, SCREENWIDTH-40, 3)];
+        UILabel*line1 = [[UILabel alloc]initWithFrame:CGRectMake(20, 195, SCREENWIDTH-40, 1)];
         line1.backgroundColor = [UIColor lightGrayColor];
         [view addSubview:line1];
+        
+        [view1 createScrollView:view];
+        UIScrollView*shareScrollView = (UIScrollView*)[view viewWithTag:1201];
+        UIScrollView*otherScrollView = (UIScrollView*)[view viewWithTag:1203];
+        
+        UIPageControl*sharePageControl = [[UIPageControl alloc]initWithFrame:CGRectMake(0, 140, SCREENWIDTH, 30)];
+        sharePageControl.numberOfPages = 2;
+        sharePageControl.tag = 1202;
+        sharePageControl.currentPage = 0;
+        sharePageControl.currentPageIndicatorTintColor = [UIColor whiteColor];
+        sharePageControl.pageIndicatorTintColor = [UIColor lightGrayColor];
+        sharePageControl.userInteractionEnabled = NO;
+        [view addSubview:sharePageControl];
+        
+        
+        
+        UIPageControl*otherPageControl = [[UIPageControl alloc]initWithFrame:CGRectMake(0, 290, SCREENWIDTH, 30)];
+        otherPageControl.numberOfPages = 2;
+        otherPageControl.tag = 1204;
+        otherPageControl.currentPage = 0;
+        otherPageControl.currentPageIndicatorTintColor = [UIColor whiteColor];
+        otherPageControl.pageIndicatorTintColor = [UIColor lightGrayColor];
+        otherPageControl.userInteractionEnabled = NO;
+        [view addSubview:otherPageControl];
         
         for (int i =0; i<[titleArray count]; i++)
         {
             UIButton*btn;
             btn = [UIButton buttonWithType:UIButtonTypeCustom];
-            if (i<=4)
+            if (i<5)
             {
-                btn.frame = CGRectMake((SCREENWIDTH-260)/2+i%3*100, 55+(int)(i/3)*80, 55, 55);
+                btn.frame = CGRectMake((SCREENWIDTH-260)/2+i%3*100+(int)(i/3)*320, 15, 60, 60);
             }else
             {
-                btn.frame = CGRectMake((SCREENWIDTH-260)/2+(i-5)*100, 255, 55, 55);
+                btn.frame = CGRectMake((SCREENWIDTH-260)/2+(i-5)%3*100+(int)((i-5)/3)*320, 15, 60, 60);
             }
             btn.tag = 1000+i;
-            if (i==4)
+            if (i==2)
             {
-                [btn setImage:[UIImage redraw:[UIImage imageNamed:@"more_weibo@2x"] Frame:CGRectMake(0, 0, 55, 55)] forState:UIControlStateNormal];
+                [btn setImage:[UIImage redraw:[UIImage imageNamed:@"xlweibo"] Frame:CGRectMake(0, 0, 60, 60)] forState:UIControlStateNormal];
 //                [btn setImage:[UIImage imageNamed:@"more_weibo@2x"] forState:UIControlStateHighlighted];
             }else if (i==3)
             {
-                [btn setImage:[UIImage redraw:[UIImage imageNamed:@"icon_default@2x"] Frame:CGRectMake(0, 0, 55, 55)] forState:UIControlStateNormal];
+                [btn setImage:[UIImage redraw:[UIImage imageNamed:@"txweibo"] Frame:CGRectMake(0, 0, 60, 60)] forState:UIControlStateNormal];
 //                [btn setImage:[UIImage imageNamed:@"more_weixin_highlighted@2x"] forState:UIControlStateHighlighted];
             }else if (i==0)
             {
-                [btn setImage:[UIImage redraw:[UIImage imageNamed:@"Action_Share@2x"] Frame:CGRectMake(0, 0, 55, 55)] forState:UIControlStateNormal];
+                [btn setImage:[UIImage redraw:[UIImage imageNamed:@"Action_Share@2x"] Frame:CGRectMake(0, 0, 60, 60)] forState:UIControlStateNormal];
 //                [btn setImage:[UIImage imageNamed:@"more_circlefriends_highlighted@2x"] forState:UIControlStateHighlighted];
             }else if (i==1)
             {
-                [btn setImage:[UIImage redraw:[UIImage imageNamed:@"Action_Moments@2x"] Frame:CGRectMake(0, 0, 55, 55)] forState:UIControlStateNormal];
+                [btn setImage:[UIImage redraw:[UIImage imageNamed:@"Action_Moments@2x"] Frame:CGRectMake(0, 0, 60, 60)] forState:UIControlStateNormal];
 //                [btn setImage:[UIImage imageNamed:@"icon_default@2x"] forState:UIControlStateHighlighted];
             }
-            else if (i==2)
+            else if (i==4)
             {
-                [btn setImage:[UIImage redraw:[UIImage imageNamed:@"QzoneShare"] Frame:CGRectMake(0, 0, 55, 55)] forState:UIControlStateNormal];
+                [btn setImage:[UIImage redraw:[UIImage imageNamed:@"qqkongjian"] Frame:CGRectMake(0, 0, 60, 60)] forState:UIControlStateNormal];
 //                [btn setImage:[UIImage imageNamed:@"more_icon_collection1@2x"] forState:UIControlStateHighlighted];
+            }else if (i==9)
+            {
+                [btn setImage:[UIImage redraw:[UIImage imageNamed:@"MoreMyFavorites@2x"] Frame:CGRectMake(0, 0, 60, 60)] forState:UIControlStateNormal];
+                //                [btn setImage:[UIImage imageNamed:@"more_icon_collection1@2x"] forState:UIControlStateHighlighted];
             }else if (i==5)
             {
-                [btn setImage:[UIImage redraw:[UIImage imageNamed:@"MoreMyFavorites@2x"] Frame:CGRectMake(0, 0, 55, 55)] forState:UIControlStateNormal];
-                //                [btn setImage:[UIImage imageNamed:@"more_icon_collection1@2x"] forState:UIControlStateHighlighted];
-            }else if (i==6)
-            {
-                [btn setImage:[UIImage redraw:[UIImage imageNamed:@"Action_MyFavAdd@2x"] Frame:CGRectMake(0, 0, 55, 55)] forState:UIControlStateNormal];
+                [btn setImage:[UIImage redraw:[UIImage imageNamed:@"Action_MyFavAdd@2x"] Frame:CGRectMake(0, 0, 60, 60)] forState:UIControlStateNormal];
                 //                [btn setImage:[UIImage imageNamed:@"more_icon_collection2@2x"] forState:UIControlStateHighlighted];
                 //                [btn setBackgroundImage:[UIImage redraw:[UIImage imageNamed:@"Action_MyFavAdd@2x"] Frame:CGRectMake(0, 0, 150, 150)] forState:UIControlStateNormal];
+            }else if (i==6)
+            {
+                [btn setImage:[UIImage redraw:[UIImage imageNamed:@"Action_Copy@2x"] Frame:CGRectMake(0, 0, 60, 60)] forState:UIControlStateNormal];
+//                [btn setImage:[UIImage imageNamed:@"more_icon_link@2x"] forState:UIControlStateHighlighted];
             }else if (i==7)
             {
-                [btn setImage:[UIImage redraw:[UIImage imageNamed:@"Action_Copy@2x"] Frame:CGRectMake(0, 0, 55, 55)] forState:UIControlStateNormal];
-//                [btn setImage:[UIImage imageNamed:@"more_icon_link@2x"] forState:UIControlStateHighlighted];
+                [btn setImage:[UIImage redraw:[UIImage imageNamed:@"flashlight"] Frame:CGRectMake(0, 0, 60, 60)] forState:UIControlStateNormal];
+            }else if (i==8)
+            {
+                [btn setImage:[UIImage redraw:[UIImage imageNamed:@"saomiao"] Frame:CGRectMake(0, 0, 60, 60)] forState:UIControlStateNormal];
             }
             btn.layer.cornerRadius = 8;
             btn.layer.borderColor = [UIColor lightGrayColor].CGColor;
             btn.layer.borderWidth = 1;
             btn.layer.masksToBounds = YES;
             [btn addTarget:view1.superview action:@selector(btnAction:) forControlEvents:UIControlEventTouchUpInside];
-            [view addSubview:btn];
+            if (i<5)
+            {
+                [shareScrollView addSubview:btn];
+            }else
+            {
+                [otherScrollView addSubview:btn];
+            }
+//            [view addSubview:btn];
             
             UILabel*titleLabel;
             if (i<5)
             {
-                 titleLabel = [[UILabel alloc]initWithFrame:CGRectMake((SCREENWIDTH-260)/2+i%3*100, 95+(int)(i/3)*80, 55, 50)];
+                 titleLabel = [[UILabel alloc]initWithFrame:CGRectMake((SCREENWIDTH-260)/2+i%3*100+(int)(i/3)*320, 70, 60, 30)];
             }else
             {
-                 titleLabel = [[UILabel alloc]initWithFrame:CGRectMake((SCREENWIDTH-260)/2+(i-5)*100, 300, 55, 50)];
+                 titleLabel = [[UILabel alloc]initWithFrame:CGRectMake((SCREENWIDTH-260)/2+(i-5)%3*100+(int)((i-5)/3)*320, 70, 60, 30)];
             }
             title.numberOfLines = 0;
             titleLabel.textAlignment = NSTextAlignmentCenter;
             titleLabel.text = titleArray[i];
             titleLabel.tag = 1100+i;
             titleLabel.font = [UIFont systemFontOfSize:11];
-            [view addSubview:titleLabel];
+//            [view addSubview:titleLabel];
+            if (i<5)
+            {
+                [shareScrollView addSubview:titleLabel];
+            }else
+            {
+                [otherScrollView addSubview:titleLabel];
+            }
         }
         UIButton*cancel  =[UIButton buttonWithType:UIButtonTypeCustom];
-        cancel.frame = CGRectMake(20, view.frame.size.height-37, SCREENWIDTH-40, 33);
+        cancel.frame = CGRectMake(20, view.frame.size.height-50, SCREENWIDTH-40, 35);
         [cancel setTitle:@"取消" forState:UIControlStateNormal];
         
         cancel.layer.backgroundColor = colorref1;
@@ -159,7 +202,7 @@
         [UIView beginAnimations:nil context:nil];
         [UIView setAnimationBeginsFromCurrentState:YES];
         [UIView setAnimationDuration:0.5];//动画运行时间
-        view.frame = CGRectMake(0, SCREENHEIGHT-380, SCREENWIDTH, 380);//结束的位置
+        view.frame = CGRectMake(0, SCREENHEIGHT-375, SCREENWIDTH, 375);//结束的位置
         [UIView commitAnimations];//提交动画
     }
     view1.tag = 999;
@@ -167,17 +210,37 @@
 }
 -(void)cancel1
 {
-    UIView*view = [self viewWithTag:1000];
+    UIView*view = [self viewWithTag:1200];
     [UIView beginAnimations:nil context:nil];
     [UIView setAnimationBeginsFromCurrentState:YES];
     [UIView setAnimationDuration:0.5];//动画运行时间
-    view.frame = CGRectMake(0, SCREENHEIGHT, SCREENWIDTH, 380);//结束的位置
+    view.frame = CGRectMake(0, SCREENHEIGHT, SCREENWIDTH, 375);//结束的位置
     [UIView commitAnimations];//提交动画
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self removeFromSuperview];
     });
-    
 }
+-(void)createScrollView:(UIView*)view
+{
+    UIScrollView*shareScrollView = [[UIScrollView alloc]initWithFrame:CGRectMake(0, 40, 320, 100)];
+    shareScrollView.tag = 1201;
+    
+    shareScrollView.delegate = (id<UIScrollViewDelegate>)self;
+    shareScrollView.contentSize = CGSizeMake(SCREENWIDTH*2, 100);
+    shareScrollView.pagingEnabled = YES;
+    shareScrollView.showsHorizontalScrollIndicator = NO;
+    [view addSubview:shareScrollView];
+    
+    UIScrollView*otherScrollView = [[UIScrollView alloc]initWithFrame:CGRectMake(0, 195, 320, 100)];
+    otherScrollView.tag = 1203;
+    otherScrollView.delegate = (id<UIScrollViewDelegate>)self;
+    //        otherScrollView.backgroundColor = [UIColor blackColor];
+    otherScrollView.contentSize = CGSizeMake(SCREENWIDTH*2, 100);
+    otherScrollView.pagingEnabled = YES;
+    otherScrollView.showsHorizontalScrollIndicator = NO;
+    [view addSubview:otherScrollView];
+}
+
 -(void)btnAction:(UIButton*)btn
 {
     
@@ -188,11 +251,33 @@
      " return imgs[0].src;"
      "}\";"
      "document.getElementsByTagName('head')[0].appendChild(script);"];
-    NSString *imgUrl = [webview stringByEvaluatingJavaScriptFromString:@"getFirstImage();"];
+//    NSString *imgUrl = [webview stringByEvaluatingJavaScriptFromString:@"getFirstImage();"];
     
     UILabel*label = (UILabel*)[self viewWithTag:btn.tag+100];
-    NSNotification *notification = [NSNotification notificationWithName:@"shareKind" object:self userInfo:@{@"shareUrl":webview.request.URL,@"imageUrl":imgUrl,@"imageData":imageData,@"shareKind":label.text,@"content":[NSString stringWithFormat:@"%@%@",[webview stringByEvaluatingJavaScriptFromString:@"document.title"],webview.request.URL],}];
-    [[NSNotificationCenter defaultCenter]postNotification:notification];
+//    if (label.tag != 1106&&label.tag!=1108)
+//    {
+//    NSMutableDictionary*dict = [[NSMutableDictionary alloc]initWithDictionary:@{@"shareUrl":webview.request.URL,@"shareKind":label.text,}];
+//    
+//    if (imgUrl!=nil)
+//    {
+////        @{@"shareUrl":webview.request.URL,@"imageUrl":imgUrl,@"imageData":imageData,@"shareKind":label.text,@"content":[NSString stringWithFormat:@"%@%@",[webview stringByEvaluatingJavaScriptFromString:@"document.title"],webview.request.URL],}
+//        [dict setObject:imgUrl forKey:@"imageUrl"];
+//    }
+//    if(imageData!=nil)
+//    {
+//        [dict setObject:imageData forKey:@"imageData"];
+//    }
+//    if ([webview stringByEvaluatingJavaScriptFromString:@"document.title"]!=nil)
+//    {
+//        [dict setObject:[NSString stringWithFormat:@"%@%@",[webview stringByEvaluatingJavaScriptFromString:@"document.title"],webview.request.URL] forKey:@"content"];
+//    }
+//    NSNotification *notification = [NSNotification notificationWithName:@"shareKind" object:self userInfo:dict];
+//    [[NSNotificationCenter defaultCenter]postNotification:notification];
+    NSNotification *notification = [NSNotification notificationWithName:@"shareKind" object:self userInfo:@{@"shareKind":label.text,@"content":[NSString stringWithFormat:@"%@%@",[webview stringByEvaluatingJavaScriptFromString:@"document.title"],webview.request.URL],}];
+        [[NSNotificationCenter defaultCenter]postNotification:notification];
+//    }
+//    NSLog(@"%@%@%@%@%@",webview.request.URL,imgUrl,imageData,label.text,[webview stringByEvaluatingJavaScriptFromString:@"document.title"]);
+    
     
 //    AppDelegate*appdelegate = (AppDelegate*)[UIApplication sharedApplication].delegate;
     if ([label.text isEqualToString:@"新浪微博"])
@@ -263,6 +348,34 @@
 //        NSLog(@"%@",pasteboard.string);
         UIAlertView*alert = [[UIAlertView alloc]initWithTitle:@"提示" message:@"复制链接成功。" delegate:nil cancelButtonTitle:@"确定" otherButtonTitles:nil];
         [alert show];
+    }else if ([label.text isEqualToString:@"手电筒"])
+    {
+        static int flag = 0;
+        AVCaptureDevice*device = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
+        if (![device hasTorch])
+        {
+            UIAlertView*alert = [[UIAlertView alloc]initWithTitle:@"提示" message:@"打开手电筒失败！" delegate:nil cancelButtonTitle:@"确定" otherButtonTitles:nil];
+            [alert show];
+        }else
+        {
+            if (flag==0)
+            {
+                [device lockForConfiguration:nil];
+                [device setTorchMode:AVCaptureTorchModeOn];
+                [device unlockForConfiguration];
+                flag = 1;
+            }else
+            {
+                [device lockForConfiguration:nil];
+                [device setTorchMode:AVCaptureTorchModeOff];
+                [device unlockForConfiguration];
+                flag = 0;
+            }
+            
+        }
+    }else if ([label.text isEqualToString:@"扫一扫"])
+    {
+        
     }
     
     [self cancel1];
@@ -290,5 +403,18 @@
 {
     UIView*view;
     return view;
+}
+
+-(void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
+{
+    if (scrollView.tag==1201)
+    {
+        UIPageControl*pageControl = (UIPageControl*)[self viewWithTag:1202];
+        pageControl.currentPage = (int)scrollView.contentOffset.x/320;
+    }else if (scrollView.tag ==1203)
+    {
+        UIPageControl*pageControl = (UIPageControl*)[self viewWithTag:1204];
+        pageControl.currentPage = (int)scrollView.contentOffset.x/320;
+    }
 }
 @end

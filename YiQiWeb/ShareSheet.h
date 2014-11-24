@@ -13,9 +13,9 @@
 #import "AppDelegate.h"
 #import "WbApi.h"
 #import "Collection.h"
-
 #import "SqlServer.h"
-@interface ShareSheet : UIView<WeiboAuthDelegate,WeiboRequestDelegate>
+
+@interface ShareSheet : UIView<WeiboAuthDelegate,WeiboRequestDelegate,UIScrollViewDelegate,UIScrollViewAccessibilityDelegate>
 
 @property(strong,nonatomic)UIWebView*webview;
 @property(strong,nonatomic)Collection*item;

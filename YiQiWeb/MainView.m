@@ -15,7 +15,10 @@
 
 @implementation MainView{
     Collection *item;
+    NSString* netFlag;
+    NSURLRequest*errorRequest;
 }
+@synthesize webview;
 -(void)dealloc
 {
     UIWebView*webView = (UIWebView*)[self.view viewWithTag:1000];
@@ -34,10 +37,11 @@
                                                                    nil];
     
     // Do any additional setup after loading the view from its nib.
-    UIWebView*webview = [[UIWebView alloc]initWithFrame:CGRectMake(0, 0, 320, [[UIScreen mainScreen] bounds].size.height)];
+    webview = [[UIWebView alloc]initWithFrame:CGRectMake(0, 0, 320, [[UIScreen mainScreen] bounds].size.height)];
     webview.tag = 1000;
     webview.delegate= self;
     NSURLRequest*request = [[NSURLRequest alloc]initWithURL:[[NSURL alloc] initWithString:@"http://17ll.com"] cachePolicy:NSURLRequestReloadRevalidatingCacheData timeoutInterval:30];
+    errorRequest = [[NSURLRequest alloc]initWithURL:[[NSURL alloc] initWithString:@"http://17ll.com"] cachePolicy:NSURLRequestReloadRevalidatingCacheData timeoutInterval:30];
     [webview loadRequest:request];
     [self.view addSubview:webview];
     
@@ -51,12 +55,66 @@
     
     item = [[Collection alloc] init];
     
+    
     [[NSNotificationCenter defaultCenter]removeObserver:self name:@"pushCollections" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(pushCollections) name:@"pushCollections" object:nil];
     
     [[NSNotificationCenter defaultCenter]removeObserver:self name:@"pushShare" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(pushShare:) name:@"pushShare" object:nil];
 }
+-(void)networkChange:(NSNotification*)notification
+{
+    Reachability*reachability =(Reachability*)[notification object];
+    //获取当前网络连接状态
+    NetworkStatus status = [reachability currentReachabilityStatus];
+    //
+    NSString*strNetWorkStatus;
+        NSLog(@"%u,%u",[reachability currentReachabilityStatus],[reachability connectionRequired]);
+    if (netFlag==nil)
+    {
+        netFlag = [NSString stringWithFormat:@"%u",[reachability connectionRequired]];
+    }else
+    {
+        if (![netFlag isEqualToString:[NSString stringWithFormat:@"%u",[reachability connectionRequired]]])
+        {
+            if ([reachability currentReachabilityStatus])
+            {
+                NSLog(@"%@,%@",netFlag,errorRequest);
+                [webview loadRequest:errorRequest];
+                UIView*view = (UIView*)[self.view viewWithTag:1003];
+                [view removeFromSuperview];
+            }
+        }
+        netFlag = [NSString stringWithFormat:@"%u",[reachability connectionRequired]];
+    }
+    if (status == NotReachable)
+    {
+        strNetWorkStatus = @"无网络连接,请检查网络";
+        
+    }else if (status == ReachableViaWiFi)
+    {
+        strNetWorkStatus = @"当前正使用wifi网络连接";
+    }else if (status == ReachableViaWWAN)
+    {
+        strNetWorkStatus = @"当前正使用移动蜂窝网络连接";
+    }
+    //生成警示框,网络环境发生变化时弹出
+    if ([reachability connectionRequired]==4)
+    {
+        UIAlertView*alert = [[UIAlertView alloc]initWithTitle:@"提示" message:strNetWorkStatus delegate:nil cancelButtonTitle:@"确定" otherButtonTitles:@"取消", nil];
+        [alert show];
+    }
+
+}
+-(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+    NSLog(@"dddfhh");
+    if ([keyPath isEqualToString:@"network"])
+    {
+        NSLog(@"====%@",[change objectForKey:NSKeyValueChangeNewKey]);
+    }
+}
+
 -(void)pushCollections
 {
     CollectionsViewController *viewController = [[CollectionsViewController alloc] initWithNibName:@"CollectionsViewController" bundle:nil];
@@ -68,7 +126,6 @@
     shareView.shareContent = [[notif userInfo]objectForKey:@"shareContent"];
     shareView.shareKind =[[notif userInfo]objectForKey:@"shareKind"];
     
-//    UIWebView*webView = (UIWebView*)[self.view viewWithTag:1000];
     shareView.imageData = item.imgData;
     [self.navigationController pushViewController:shareView animated:YES];
     
@@ -76,7 +133,8 @@
 //webview加载结束调用的代理
 -(void)webViewDidFinishLoad:(UIWebView *)webView
 {
-//    [webView reload];
+    NSLog(@"%@",webview.request);
+    errorRequest = webView.request;
     UIBarButtonItem*moreItem = self.navigationItem.rightBarButtonItem;
     UIButton*btn = (UIButton*)moreItem.customView;
     btn.alpha = 1;
@@ -94,6 +152,8 @@
 //        self.navigationController.navigationBarHidden = YES;
         self.navigationItem.leftBarButtonItem = nil;
     }
+    UIView*view = (UIView*)[self.view viewWithTag:1003];
+    [view removeFromSuperview];
     UIActivityIndicatorView*indicator = (UIActivityIndicatorView*)[self.view viewWithTag:1001];
     [indicator stopAnimating];
     UILabel*label = (UILabel*)[self.view viewWithTag:1002];
@@ -138,71 +198,111 @@
         UIGraphicsEndImageContext();
         
     }
-    
+//    NSLog(@"%@",item.imgData);
     item.title = [webView stringByEvaluatingJavaScriptFromString:@"document.title"];
     item.url = webView.request.URL.absoluteString;
 }
 //webview加载错误调用的代理
 -(void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
-    UIAlertView*alert = [[UIAlertView alloc]initWithTitle:@"提醒" message:@"页面加载失败" delegate:nil cancelButtonTitle:@"确定" otherButtonTitles:nil];
+    
+    UIView*view = (UIView*)[self.view viewWithTag:1003];
+    if (view==nil)
+    {
+        view = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 100, 80)];
+        view.center = CGPointMake([UIScreen mainScreen].bounds.size.width/2, [UIScreen mainScreen].bounds.size.height/2);
+        view.backgroundColor = [UIColor blackColor];
+        view.tag = 1003;
+        view.layer.cornerRadius = 5;
+        view.layer.masksToBounds = YES;
+        view.alpha = 0.7;
+        [self.view addSubview:view];
+    }else
+    {
+        [self.view addSubview:view];
+    }
+    
+    UIAlertView*alert = [[UIAlertView alloc]initWithTitle:@"提醒" message:@"加载失败" delegate:nil cancelButtonTitle:@"确定" otherButtonTitles:nil];
     [alert show];
-    UIActivityIndicatorView*indicator = (UIActivityIndicatorView*)[self.view viewWithTag:1001];
+    UIActivityIndicatorView*indicator = (UIActivityIndicatorView*)[view viewWithTag:1001];
     if (indicator==nil)
     {
         indicator = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
         indicator.center = CGPointMake([UIScreen mainScreen].bounds.size.width/2, [UIScreen mainScreen].bounds.size.height/2);
         [indicator startAnimating];
         indicator.tag =1001;
-        [self.view addSubview:indicator];
+        [view addSubview:indicator];
     }else
     {
         [indicator startAnimating];
     }
     
-    UILabel*label = (UILabel*)[self.view viewWithTag:1002];
+    UILabel*label = (UILabel*)[view viewWithTag:1002];
     if (label==nil)
     {
-        label = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 100, 30)];
+        label = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 100, 50)];
         label.tag = 1002;
         label.center = CGPointMake([UIScreen mainScreen].bounds.size.width/2, [UIScreen mainScreen].bounds.size.height/2+30);
-        label.text = @"页面加载中...";
-        label.textColor = [UIColor blackColor];
-        [self.view addSubview:label];
+        label.text = @"loading";
+        label.textAlignment = NSTextAlignmentCenter;
+        label.font = [UIFont systemFontOfSize:18];
+        label.textColor = [UIColor whiteColor];
+        [view addSubview:label];
     }else
     {
-        [self.view addSubview:label];
+        [view addSubview:label];
     }
     
 }
 //webview加载开始调用的代理
 -(void)webViewDidStartLoad:(UIWebView *)webView
 {
-    UIActivityIndicatorView*indicator = (UIActivityIndicatorView*)[self.view viewWithTag:1001];
-    if (indicator==nil)
+    UIView*view = (UIView*)[self.view viewWithTag:1003];
+    if (view==nil)
     {
-        indicator = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-        indicator.center = CGPointMake([UIScreen mainScreen].bounds.size.width/2, [UIScreen mainScreen].bounds.size.height/2);
-        [indicator startAnimating];
-        indicator.tag =1001;
-        [self.view addSubview:indicator];
+        view = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 100, 80)];
+        view.center = CGPointMake([UIScreen mainScreen].bounds.size.width/2, [UIScreen mainScreen].bounds.size.height/2);
+        view.backgroundColor = [UIColor blackColor];
+        view.tag = 1003;
+        view.layer.cornerRadius = 5;
+        view.layer.masksToBounds = YES;
+        view.alpha = 0.7;
+        [self.view addSubview:view];
     }else
     {
-        [indicator startAnimating];
+        [self.view addSubview:view];
     }
-    
-    UILabel*label = (UILabel*)[self.view viewWithTag:1002];
+    UILabel*label = (UILabel*)[view viewWithTag:1002];
     if (label==nil)
     {
         label = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 100, 30)];
         label.tag = 1002;
-        label.center = CGPointMake([UIScreen mainScreen].bounds.size.width/2, [UIScreen mainScreen].bounds.size.height/2+30);
-        label.text = @"页面加载中...";
-        label.textColor = [UIColor blackColor];
-        [self.view addSubview:label];
+        label.center =CGPointMake(view.bounds.size.width/2, view.bounds.size.height/2+20);
+        label.text = @"loading";
+        label.textAlignment = NSTextAlignmentCenter;
+        label.font = [UIFont systemFontOfSize:18];
+        label.textColor = [UIColor whiteColor];
+//        label.backgroundColor = [UIColor blackColor];
+        label.layer.cornerRadius = 5;
+        label.layer.masksToBounds = YES;
+//        label.alpha = 0.7;
+        [view addSubview:label];
     }else
     {
-        [self.view addSubview:label];
+        [view addSubview:label];
+    }
+    UIActivityIndicatorView*indicator = (UIActivityIndicatorView*)[view viewWithTag:1001];
+    if (indicator==nil)
+    {
+        indicator = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+        indicator.center = CGPointMake(view.bounds.size.width/2, view.bounds.size.height/2-20);
+        [indicator startAnimating];
+        indicator.activityIndicatorViewStyle = UIActivityIndicatorViewStyleWhite;
+        indicator.tag =1001;
+        [view addSubview:indicator];
+    }else
+    {
+        [indicator startAnimating];
     }
     UIBarButtonItem*moreItem = self.navigationItem.rightBarButtonItem;
     UIButton*btn = (UIButton*)moreItem.customView;
@@ -218,22 +318,20 @@
 //返回按钮触发事件
 -(void)back
 {
-    UIWebView*webView = (UIWebView*)[self.view viewWithTag:1000];
-    if (webView.canGoBack)
+    if (webview.canGoBack)
     {
-        [webView goBack];
+        [webview goBack];
     }
 }
 //更多按钮触发事件
 -(void)more
 {
     ShareSheet*shareView = [ShareSheet shareWeiboView];
-    UIWebView*webView = (UIWebView*)[self.view viewWithTag:1000];
-    shareView.webview = webView;
+    shareView.webview = webview;
     shareView.item = item;
     shareView.imageData = item.imgData;
     //把webview中的键盘回收。
-    [webView stringByEvaluatingJavaScriptFromString:@"document.activeElement.blur()"];
+    [webview stringByEvaluatingJavaScriptFromString:@"document.activeElement.blur()"];
 
     [self.navigationController.view addSubview:shareView];
 }

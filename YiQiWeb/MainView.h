@@ -12,6 +12,8 @@
 #import "ShareViewController.h"
 #import "BaseAnimation.h"
 #import "SlideAnimation.h"
+
 @interface MainView : UIViewController<UIWebViewDelegate,UIActionSheetDelegate,UIViewControllerTransitioningDelegate,UINavigationControllerDelegate>
+@property(strong,nonatomic)UIWebView*webview;
 
 @end

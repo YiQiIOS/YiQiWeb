@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface EditViewController : UIViewController
+@interface EditViewController : UIViewController<UIWebViewDelegate,UIAlertViewDelegate>
 
 @property (nonatomic, copy) NSString *cId;
 

@@ -12,6 +12,8 @@
 #import "CustomCell.h"
 #import "EditViewController.h"
 #import "GoViewController.h"
+#import "VerticallyAlignedLabel.h"
+#import "EditViewController.h"
 
 @interface CollectionsViewController ()
 
@@ -30,16 +32,20 @@
     
     self.navigationItem.title = @"收藏列表";
     
-    
     UIBarButtonItem *backbutton = [[UIBarButtonItem alloc] initWithTitle:@"返回" style:UIBarButtonItemStyleBordered target:self action:@selector(goback)];
     backbutton.tintColor = [UIColor whiteColor];
     self.navigationItem.leftBarButtonItem = backbutton;
+    
+    UIBarButtonItem *addButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addCollection)];
+    addButton.tintColor = [UIColor whiteColor];
+    self.navigationItem.rightBarButtonItem = addButton;
     
     collectionList = [[NSMutableArray alloc] init];
     
     self.tableViewList.tableFooterView = [UIView new];
     
-    [self.searchBar setShowsCancelButton:YES animated:YES];
+//    [self.searchBar setShowsCancelButton:YES animated:YES];
+    [self setSearchBarTextfiled:self.searchBar];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -47,6 +53,17 @@
     [self loadData];
 }
 
+//在searchbar的搜索栏显示搜索两个字
+- (void)setSearchBarTextfiled:(UISearchBar *)searchBar{
+    for (UIView *view in searchBar.subviews){
+        for (id subview in view.subviews){
+            if ( [subview isKindOfClass:[UITextField class]] ){
+                [(UITextField *)subview setPlaceholder:@"搜索"];
+                return;
+            }
+        }
+    }
+}
 
 //加载数据
 -(void) loadData{
@@ -91,9 +108,10 @@
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
-    static NSString *CellIdentifier = @"CustomCell";
+//    static NSString *CellIdentifier = @"CustomCell";
     
-    CustomCell *cell = (CustomCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+//    CustomCell *cell = (CustomCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    CustomCell *cell = (CustomCell *)[tableView cellForRowAtIndexPath:indexPath];
     
     if (!cell) {
         cell = [[[NSBundle mainBundle] loadNibNamed:@"CustomCell" owner:self options:nil] lastObject];
@@ -102,13 +120,23 @@
     Collection *info = [collectionList objectAtIndex:indexPath.row];
     cell.lblTitle.text = info.title;
     cell.lblTitle.font = [UIFont boldSystemFontOfSize:14.0f];
+    
+    VerticallyAlignedLabel *lblVUrl = [[VerticallyAlignedLabel alloc] initWithFrame:cell.lblUrl.frame];
+    lblVUrl.text = info.url;
+    lblVUrl.numberOfLines = 0 ;
+    lblVUrl.lineBreakMode = NSLineBreakByCharWrapping;
+    [lblVUrl setVerticalAlignment:VerticalAlignmentTop];
+    lblVUrl.font = [UIFont systemFontOfSize:12.0f];
+    [cell.contentView addSubview:lblVUrl];
+    [cell.lblUrl removeFromSuperview];
    
-    cell.lblUrl.text = info.url;
-    cell.lblUrl.numberOfLines = 0;
-    cell.lblUrl.font = [UIFont systemFontOfSize:12.0f];
-    
-    cell.imgView.image=[[UIImage alloc] initWithData:info.imgData];
-    
+
+    if (info.imgData == nil || info.imgData.length == 0) {
+        cell.imgView.image = [UIImage imageNamed:@"Default.png"];
+    }
+    else{
+        cell.imgView.image=[[UIImage alloc] initWithData:info.imgData];
+    }
     
     int days = [self getPublishedDays:info.publishDate];
     NSString *message;
@@ -269,6 +297,12 @@
 //返回按钮事件
 -(void) goback{
     [self.navigationController popViewControllerAnimated:YES];
+}
+
+
+-(void) addCollection{
+    EditViewController *viewController = [[EditViewController alloc] initWithNibName:@"EditViewController" bundle:nil];
+    [self.navigationController pushViewController:viewController animated:YES];
 }
 
 - (void)didReceiveMemoryWarning {

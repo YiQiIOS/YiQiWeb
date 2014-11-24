@@ -8,41 +8,50 @@
 
 #import "EditViewController.h"
 #import "SqlServer.h"
+#import "Collection.h"
 
 @interface EditViewController ()
 
 @end
 
-@implementation EditViewController
+@implementation EditViewController{
+    Collection *item;
+    BOOL isFlag;
+    BOOL isOk;
+}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
     
-    self.navigationItem.title = @"编辑";
+    self.navigationItem.title = @"添加收藏";
     
     
     UIBarButtonItem *editButton = [[UIBarButtonItem alloc] initWithTitle:@"确定" style:UIBarButtonItemStyleBordered target:self action:@selector(done)];
+    editButton.tintColor = [UIColor whiteColor];
     self.navigationItem.rightBarButtonItem = editButton;
     
-    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"取消" style:UIBarButtonItemStyleBordered target:self action:@selector(goback)];
+    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:@"返回" style:UIBarButtonItemStyleBordered target:self action:@selector(goback)];
+    cancelButton.tintColor = [UIColor whiteColor];
     self.navigationItem.leftBarButtonItem = cancelButton;
 
-    SqlServer *sqlDBInstance = [SqlServer sharedInstance];
-    [sqlDBInstance openDB];
-    NSString *selectedSql = [NSString stringWithFormat:@"SELECT * FROM COLLECTIONINFO WHERE ID = %@",_cId];
-    sqlite3_stmt *statement;
-    if (sqlite3_prepare_v2(sqlDBInstance.db, [selectedSql UTF8String], -1, &statement, NULL) == SQLITE_OK) {
-        if (sqlite3_step(statement) == SQLITE_ROW) {
-            char *c_title = (char *) sqlite3_column_text(statement, 1);
-            self.txtTitle.text = [NSString stringWithUTF8String:c_title];
-            
-            char *c_url = (char *) sqlite3_column_text(statement, 2);
-            self.txtUrl.text = [NSString stringWithUTF8String:c_url];
-        }
-        sqlite3_finalize(statement);
-    }
-    sqlite3_close(sqlDBInstance.db);
+//    SqlServer *sqlDBInstance = [SqlServer sharedInstance];
+//    [sqlDBInstance openDB];
+//    NSString *selectedSql = [NSString stringWithFormat:@"SELECT * FROM COLLECTIONINFO WHERE ID = %@",_cId];
+//    sqlite3_stmt *statement;
+//    if (sqlite3_prepare_v2(sqlDBInstance.db, [selectedSql UTF8String], -1, &statement, NULL) == SQLITE_OK) {
+//        if (sqlite3_step(statement) == SQLITE_ROW) {
+//            char *c_title = (char *) sqlite3_column_text(statement, 1);
+//            self.txtTitle.text = [NSString stringWithUTF8String:c_title];
+//            
+//            char *c_url = (char *) sqlite3_column_text(statement, 2);
+//            self.txtUrl.text = [NSString stringWithUTF8String:c_url];
+//        }
+//        sqlite3_finalize(statement);
+//    }
+//    sqlite3_close(sqlDBInstance.db);
+    
+    item = [[Collection alloc] init];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -62,21 +71,164 @@
 
 
 - (IBAction)done{
-    NSString *title = [self.txtTitle.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    item.title = [self.txtTitle.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     NSString *url = [self.txtUrl.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-    if (title.length == 0 || url.length == 0) {
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"提示" message:@"标题和网址都不能为空！" delegate:self cancelButtonTitle:@"确定" otherButtonTitles: nil];
+    if (url.length == 0) {
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"提示" message:@"请输入网址！" delegate:nil cancelButtonTitle:@"确定" otherButtonTitles: nil];
         [alert show];
     }
     else
     {
-        SqlServer *sqlDBInstance = [SqlServer sharedInstance];
-        [sqlDBInstance openDB];
-        NSString *updateSql = [NSString stringWithFormat:@"UPDATE COLLECTIONINFO SET TITLE = '%@', URL = '%@' WHERE ID = %@",title,url, _cId];
-        [sqlDBInstance exec:updateSql];
-        [self.navigationController popViewControllerAnimated:YES];
+        NSRange rang = [url rangeOfString:@"http://"];
+        if (rang.length == 0) {
+            url = [NSString stringWithFormat:@"http://%@",url];
+        }
+
+        if ([self isReguex:url]) {
+            UIWebView *webView = [[UIWebView alloc]initWithFrame:CGRectMake(0, 0, 320, [[UIScreen mainScreen] bounds].size.height)];
+            webView.delegate = self;
+            NSURLRequest*request = [[NSURLRequest alloc]initWithURL:[[NSURL alloc] initWithString:url] cachePolicy:NSURLRequestReloadRevalidatingCacheData timeoutInterval:30];
+            [webView loadRequest:request];
+            [self.view addSubview:webView];
+            webView.hidden = YES;
+            isFlag = NO;
+
+        }else{
+            UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"提示" message:@"输入的网址格式有误！" delegate:nil cancelButtonTitle:@"确定" otherButtonTitles: nil];
+            [alert show];
+        }
+        
+        
+//        [self.navigationController popViewControllerAnimated:YES];
     }
 }
+
+-(BOOL) isReguex:(NSString *)url{
+    //用正则表达式匹配url
+    NSError *error;
+    NSString *regulaStr = @"http(s)?:\\/\\/([\\w-]+\\.)+[\\w-]+(\\/[\\w- .\\/?%&=]*)?";
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:regulaStr
+                                                                           options:NSRegularExpressionCaseInsensitive
+                                                                             error:&error];
+    NSArray *arrayOfAllMatches = [regex matchesInString:url options:0 range:NSMakeRange(0, [url length])];
+    
+    for (NSTextCheckingResult *match in arrayOfAllMatches)
+    {
+        item.url = [url substringWithRange:match.range];
+        return true;
+    }
+    return false;
+}
+
+-(void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error{
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"提示" message:@"请输入有效的网址！" delegate:nil cancelButtonTitle:@"确定" otherButtonTitles: nil];
+    [alert show];
+    isOk = NO;
+}
+
+-(void)webViewDidFinishLoad:(UIWebView *)webView{
+    if (!isFlag) {
+        if (item.title.length == 0) {
+            item.title = [webView stringByEvaluatingJavaScriptFromString:@"document.title"];
+        }
+        NSLog(@"%@",item.title);
+        [webView stringByEvaluatingJavaScriptFromString:@"var script = document.createElement('script');"
+         "script.type = 'text/javascript';"
+         "script.text = \"function getFirstImage() { "
+         "var imgs = document.getElementsByTagName('img');"
+         " return imgs[0].src;"
+         "}\";"
+         "document.getElementsByTagName('head')[0].appendChild(script);"];
+        NSString *imgUrl = [webView stringByEvaluatingJavaScriptFromString:@"getFirstImage();"];
+        if (imgUrl.length > 0) {
+            //获取网页中第一张image
+            item.imgData = [NSData dataWithContentsOfURL:[NSURL URLWithString:imgUrl]];
+        }
+        else{
+//            //如果网页没有图片，就截图
+//            CGRect r = [UIScreen mainScreen].applicationFrame;
+//            r.origin.y = r.origin.y + 44 ;
+//            UIGraphicsBeginImageContext(self.view.frame.size);
+//            CGContextRef context = UIGraphicsGetCurrentContext();
+//            CGContextSaveGState(context);
+//            UIRectClip(r);
+//            [self.view.layer renderInContext:context];
+//            UIImage *theImage = UIGraphicsGetImageFromCurrentImageContext();
+//            item.imgData = UIImageJPEGRepresentation(theImage,1.0);
+//            UIGraphicsEndImageContext();
+        }
+        //     NSLog(@"imageData=%@",item.imgData);
+        NSString *message;
+        if (item.title.length > 0) {
+            item.url = webView.request.URL.absoluteString;
+            if (![self isExistsUrl:item.url]) {
+                NSDateFormatter* dateFormat = [[NSDateFormatter alloc] init];
+                [dateFormat setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+                item.publishDate = [dateFormat stringFromDate:[NSDate date]];
+                NSString *insertSql = @"INSERT INTO COLLECTIONINFO(TITLE,URL,IMAGEDATA,COLLECTIONDATE) VALUES(?,?,?,?)";
+                SqlServer *sqlDbInstance = [SqlServer sharedInstance];
+                [sqlDbInstance openDB];
+                
+                sqlite3_stmt *statement;
+                if (sqlite3_prepare_v2(sqlDbInstance.db, [insertSql UTF8String], -1, &statement, NULL) == SQLITE_OK) {
+                    sqlite3_bind_text(statement, 1, [item.title UTF8String], -1, NULL);
+                    sqlite3_bind_text(statement, 2, [item.url UTF8String], -1, NULL);
+                    sqlite3_bind_blob(statement, 3, [item.imgData bytes], [item.imgData length], NULL);
+                    sqlite3_bind_text(statement, 4, [item.publishDate UTF8String], -1, NULL);
+                }
+               
+                if (sqlite3_step(statement) == SQLITE_ERROR) {
+                    message = @"收藏失败！";
+                    isOk = NO;
+                }
+                else
+                {
+                    message = @"收藏成功！";
+                    isOk = YES;
+                }
+                sqlite3_finalize(statement);
+                sqlite3_close(sqlDbInstance.db);
+            }
+            else
+            {
+                message = @"已收藏！";
+                isOk = NO;
+            }
+            
+            UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"提示" message:message delegate:self cancelButtonTitle:@"确定" otherButtonTitles:nil];
+            [alert show];
+            isFlag = YES;
+            
+        }
+    }
+}
+
+-(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex{
+    if (buttonIndex == 0) {
+        if (isOk) {
+            [self.navigationController popViewControllerAnimated:YES];
+        }
+    }
+}
+
+#pragma 判断是否存在url
+-(BOOL) isExistsUrl:(NSString *) url{
+    SqlServer *sqlDbInstance = [SqlServer sharedInstance];
+    [sqlDbInstance openDB];
+    sqlite3_stmt *statement;
+    NSString *selectSql = [NSString stringWithFormat:@"SELECT * FROM COLLECTIONINFO WHERE URL = '%@'",item.url];
+    if (sqlite3_prepare_v2(sqlDbInstance.db, [selectSql UTF8String], -1, &statement, NULL) == SQLITE_OK) {
+        if (sqlite3_step(statement) == SQLITE_ROW) {
+            sqlite3_finalize(statement);
+            sqlite3_close(sqlDbInstance.db);
+            return YES;
+        }
+    }
+    sqlite3_finalize(statement);
+    sqlite3_close(sqlDbInstance.db);
+    return false;
+}
+
 
 - (IBAction)title_DidEndOnExit:(id)sender {
     [self.txtUrl becomeFirstResponder];
@@ -92,6 +244,7 @@
     [self.txtUrl resignFirstResponder];
 }
 
+//返回按钮事件
 -(void) goback{
     [self.navigationController popViewControllerAnimated:YES];
 }
