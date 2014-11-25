@@ -26,4 +26,5 @@
 @property(strong,nonatomic)NSString*shareContent;
 @property(strong,nonatomic)NSString*shareKind;
 @property(strong,nonatomic)NSData*imageData;
+@property(strong,nonatomic)NSString*imageUrl;
 @end

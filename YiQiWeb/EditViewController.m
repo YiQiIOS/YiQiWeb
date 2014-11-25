@@ -9,6 +9,7 @@
 #import "EditViewController.h"
 #import "SqlServer.h"
 #import "Collection.h"
+#import "MyProgressView.h"
 
 @interface EditViewController ()
 
@@ -18,6 +19,8 @@
     Collection *item;
     BOOL isFlag;
     BOOL isOk;
+    MyProgressView *indicator;
+    UIBarButtonItem *editButton;
 }
 
 - (void)viewDidLoad {
@@ -27,7 +30,7 @@
     self.navigationItem.title = @"添加收藏";
     
     
-    UIBarButtonItem *editButton = [[UIBarButtonItem alloc] initWithTitle:@"确定" style:UIBarButtonItemStyleBordered target:self action:@selector(done)];
+    editButton = [[UIBarButtonItem alloc] initWithTitle:@"确定" style:UIBarButtonItemStyleBordered target:self action:@selector(done)];
     editButton.tintColor = [UIColor whiteColor];
     self.navigationItem.rightBarButtonItem = editButton;
     
@@ -71,6 +74,7 @@
 
 
 - (IBAction)done{
+    editButton.enabled = NO;
     item.title = [self.txtTitle.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     NSString *url = [self.txtUrl.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     if (url.length == 0) {
@@ -87,15 +91,25 @@
         if ([self isReguex:url]) {
             UIWebView *webView = [[UIWebView alloc]initWithFrame:CGRectMake(0, 0, 320, [[UIScreen mainScreen] bounds].size.height)];
             webView.delegate = self;
-            NSURLRequest*request = [[NSURLRequest alloc]initWithURL:[[NSURL alloc] initWithString:url] cachePolicy:NSURLRequestReloadRevalidatingCacheData timeoutInterval:30];
+            NSURLRequest*request = [[NSURLRequest alloc]initWithURL:[[NSURL alloc] initWithString:url] cachePolicy:NSURLRequestReloadRevalidatingCacheData timeoutInterval:10];
             [webView loadRequest:request];
+            
+            
             [self.view addSubview:webView];
             webView.hidden = YES;
             isFlag = NO;
+            indicator = [[MyProgressView alloc]initWithFrame:CGRectMake(0, 0, 120, 120) superView:self.view];
+            [indicator alignToCenter];
+            [indicator setMessage:@"处理中..."];
+            if (indicator.visible == NO) {
+                [indicator show:YES];
+            }
 
+            
         }else{
             UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"提示" message:@"输入的网址格式有误！" delegate:nil cancelButtonTitle:@"确定" otherButtonTitles: nil];
             [alert show];
+            editButton.enabled = YES;
         }
         
         
@@ -120,13 +134,21 @@
     return false;
 }
 
+-(void)webViewDidStartLoad:(UIWebView *)webView{
+    [indicator show:YES];
+}
+
 -(void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error{
     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"提示" message:@"请输入有效的网址！" delegate:nil cancelButtonTitle:@"确定" otherButtonTitles: nil];
     [alert show];
     isOk = NO;
+    [indicator hide];
+    editButton.enabled = YES;
 }
 
 -(void)webViewDidFinishLoad:(UIWebView *)webView{
+    [indicator hide];
+    editButton.enabled = YES;
     if (!isFlag) {
         if (item.title.length == 0) {
             item.title = [webView stringByEvaluatingJavaScriptFromString:@"document.title"];

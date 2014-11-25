@@ -61,10 +61,8 @@
         UIBarButtonItem*leftItem = [[UIBarButtonItem alloc]initWithCustomView:btnback];
         self.navigationItem.leftBarButtonItem = leftItem;
     }
-    UIActivityIndicatorView*indicator = (UIActivityIndicatorView*)[self.view viewWithTag:1001];
-    [indicator stopAnimating];
-    UILabel*label = (UILabel*)[self.view viewWithTag:1002];
-    [label removeFromSuperview];
+    ReminderView *view = [ReminderView reminderView];
+    [view removeFromSuperview];
     
     //显示标题
     [webView stringByEvaluatingJavaScriptFromString:@"var script = document.createElement('script');"
@@ -109,42 +107,20 @@
     
     item.title = [webView stringByEvaluatingJavaScriptFromString:@"document.title"];
     item.url = webView.request.URL.absoluteString;
+    
 }
 //webview加载错误调用的代理
 -(void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
-    UIAlertView*alert = [[UIAlertView alloc]initWithTitle:@"提醒" message:@"页面加载失败" delegate:nil cancelButtonTitle:@"确定" otherButtonTitles:nil];
+    UIAlertView*alert = [[UIAlertView alloc]initWithTitle:@"提醒" message:@"页面加载失败" delegate:nil cancelButtonTitle:nil otherButtonTitles:@"确定",nil];
     [alert show];
 }
 //webview加载开始调用的代理
 -(void)webViewDidStartLoad:(UIWebView *)webView
 {
-    UIActivityIndicatorView*indicator = (UIActivityIndicatorView*)[self.view viewWithTag:1001];
-    if (indicator==nil)
-    {
-        indicator = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-        indicator.center = CGPointMake([UIScreen mainScreen].bounds.size.width/2, [UIScreen mainScreen].bounds.size.height/2);
-        [indicator startAnimating];
-        indicator.tag =1001;
-        [self.view addSubview:indicator];
-    }else
-    {
-        [indicator startAnimating];
-    }
+    ReminderView*view = [ReminderView reminderView];
+    [self.view addSubview:view];
     
-    UILabel*label = (UILabel*)[self.view viewWithTag:1002];
-    if (label==nil)
-    {
-        label = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 100, 30)];
-        label.tag = 1002;
-        label.center = CGPointMake([UIScreen mainScreen].bounds.size.width/2, [UIScreen mainScreen].bounds.size.height/2+30);
-        label.text = @"页面加载中...";
-        label.textColor = [UIColor blackColor];
-        [self.view addSubview:label];
-    }else
-    {
-        [self.view addSubview:label];
-    }
     UIBarButtonItem*moreItem = self.navigationItem.rightBarButtonItem;
     UIButton*btn = (UIButton*)moreItem.customView;
     btn.alpha = 0.4;

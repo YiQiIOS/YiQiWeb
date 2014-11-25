@@ -12,8 +12,12 @@
 #import "ShareViewController.h"
 #import "BaseAnimation.h"
 #import "SlideAnimation.h"
-
+#import "ReminderView.h"
+#import "CameraView.h"
 @interface MainView : UIViewController<UIWebViewDelegate,UIActionSheetDelegate,UIViewControllerTransitioningDelegate,UINavigationControllerDelegate>
+{
+    int time;
+}
 @property(strong,nonatomic)UIWebView*webview;
 
 @end

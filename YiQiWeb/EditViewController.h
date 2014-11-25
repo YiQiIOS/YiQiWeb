@@ -14,6 +14,7 @@
 
 @property (strong, nonatomic) IBOutlet UITextField *txtTitle;
 @property (strong, nonatomic) IBOutlet UITextField *txtUrl;
+
 - (IBAction)done;
 - (IBAction)title_DidEndOnExit:(id)sender;
 - (IBAction)url_DidEndOnExit:(id)sender;

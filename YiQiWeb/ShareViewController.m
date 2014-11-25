@@ -13,7 +13,7 @@
 @end
 
 @implementation ShareViewController
-@synthesize shareContent,shareKind,imageData;
+@synthesize shareContent,shareKind,imageData,imageUrl;
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
