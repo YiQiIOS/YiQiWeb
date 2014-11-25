@@ -243,6 +243,10 @@
 
 -(void)btnAction:(UIButton*)btn
 {
+    if (item==nil)
+    {
+        item = [[Collection alloc]init];
+    }
     
     [webview stringByEvaluatingJavaScriptFromString:@"var script = document.createElement('script');"
      "script.type = 'text/javascript';"
@@ -251,29 +255,30 @@
      " return imgs[0].src;"
      "}\";"
      "document.getElementsByTagName('head')[0].appendChild(script);"];
-//    NSString *imgUrl = [webview stringByEvaluatingJavaScriptFromString:@"getFirstImage();"];
+    NSString *imgUrl = [webview stringByEvaluatingJavaScriptFromString:@"getFirstImage();"];
     
     UILabel*label = (UILabel*)[self viewWithTag:btn.tag+100];
 //    if (label.tag != 1106&&label.tag!=1108)
 //    {
-//    NSMutableDictionary*dict = [[NSMutableDictionary alloc]initWithDictionary:@{@"shareUrl":webview.request.URL,@"shareKind":label.text,}];
-//    
-//    if (imgUrl!=nil)
-//    {
-////        @{@"shareUrl":webview.request.URL,@"imageUrl":imgUrl,@"imageData":imageData,@"shareKind":label.text,@"content":[NSString stringWithFormat:@"%@%@",[webview stringByEvaluatingJavaScriptFromString:@"document.title"],webview.request.URL],}
-//        [dict setObject:imgUrl forKey:@"imageUrl"];
-//    }
-//    if(imageData!=nil)
-//    {
-//        [dict setObject:imageData forKey:@"imageData"];
-//    }
-//    if ([webview stringByEvaluatingJavaScriptFromString:@"document.title"]!=nil)
-//    {
-//        [dict setObject:[NSString stringWithFormat:@"%@%@",[webview stringByEvaluatingJavaScriptFromString:@"document.title"],webview.request.URL] forKey:@"content"];
-//    }
+    NSMutableDictionary*dict = [[NSMutableDictionary alloc]initWithDictionary:@{@"shareUrl":webview.request.URL,@"shareUrl":webview.request.URL,@"shareKind":label.text,}];
+    NSLog(@"%@",imgUrl);
+    if (imgUrl!=nil)
+    {
+//        @{@"shareUrl":webview.request.URL,@"imageUrl":imgUrl,@"imageData":imageData,@"shareKind":label.text,@"content":[NSString stringWithFormat:@"%@%@",[webview stringByEvaluatingJavaScriptFromString:@"document.title"],webview.request.URL],}
+        [dict setObject:imgUrl forKey:@"imageUrl"];
+    }
+    if(imageData!=nil)
+    {
+        [dict setObject:imageData forKey:@"imageData"];
+    }
+    if ([webview stringByEvaluatingJavaScriptFromString:@"document.title"]!=nil)
+    {
+        [dict setObject:[NSString stringWithFormat:@"%@%@",[webview stringByEvaluatingJavaScriptFromString:@"document.title"],webview.request.URL] forKey:@"content"];
+    }
+    
 //    NSNotification *notification = [NSNotification notificationWithName:@"shareKind" object:self userInfo:dict];
 //    [[NSNotificationCenter defaultCenter]postNotification:notification];
-    NSNotification *notification = [NSNotification notificationWithName:@"shareKind" object:self userInfo:@{@"shareKind":label.text,@"content":[NSString stringWithFormat:@"%@%@",[webview stringByEvaluatingJavaScriptFromString:@"document.title"],webview.request.URL],}];
+    NSNotification *notification = [NSNotification notificationWithName:@"shareKind" object:self userInfo:dict];
         [[NSNotificationCenter defaultCenter]postNotification:notification];
 //    }
 //    NSLog(@"%@%@%@%@%@",webview.request.URL,imgUrl,imageData,label.text,[webview stringByEvaluatingJavaScriptFromString:@"document.title"]);
@@ -300,12 +305,9 @@
     }else if ([label.text isEqualToString:@"收藏"])
     {
         NSString *message;
-        if (item==nil)
-        {
-            item = [[Collection alloc]init];
-        }
         //        NSLog(@"%@",item.title);
-        if (![self isExistsUrl:item.url]) {
+        Collection *info = [self getCollectionInfo:item.url];
+        if (info.cId.length == 0) {
             NSDateFormatter* dateFormat = [[NSDateFormatter alloc] init];
             [dateFormat setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
             item.publishDate = [dateFormat stringFromDate:[NSDate date]];
@@ -330,10 +332,33 @@
             }
             sqlite3_finalize(statement);
             sqlite3_close(sqlDbInstance.db);
+            
         }
         else
         {
-            message = @"已收藏！";
+            //更新图片
+            if (info.imgData.length == 0) {
+                SqlServer *sqlDbInstance = [SqlServer sharedInstance];
+                [sqlDbInstance openDB];
+                NSString *updateSQl = @"UPDATE COLLECTIONINFO SET IMAGEDATA=? WHERE ID = ?";
+                sqlite3_stmt *statement;
+                if (sqlite3_prepare_v2(sqlDbInstance.db, [updateSQl UTF8String], -1, &statement, NULL) == SQLITE_OK) {
+                    sqlite3_bind_blob(statement, 1, [item.imgData bytes], [item.imgData length], NULL);
+                    sqlite3_bind_text(statement, 2, [info.cId UTF8String], -1, NULL);
+                }
+                if (sqlite3_step(statement) == SQLITE_ERROR) {
+                    message = @"收藏失败！";
+                }
+                else
+                {
+                    message = @"已收藏！";
+                }
+                sqlite3_finalize(statement);
+                sqlite3_close(sqlDbInstance.db);
+            }
+            else{
+                message = @"已收藏！";
+            }
         }
         
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"提示" message:message delegate:nil cancelButtonTitle:@"确定" otherButtonTitles:nil];
@@ -375,27 +400,42 @@
         }
     }else if ([label.text isEqualToString:@"扫一扫"])
     {
-        
+        [[NSNotificationCenter defaultCenter]postNotificationName:@"camera" object:nil];
     }
     
     [self cancel1];
 }
 #pragma 判断是否存在url
--(BOOL) isExistsUrl:(NSString *) url{
+-(Collection *) getCollectionInfo:(NSString *) url{
     SqlServer *sqlDbInstance = [SqlServer sharedInstance];
     [sqlDbInstance openDB];
     sqlite3_stmt *statement;
     NSString *selectSql = [NSString stringWithFormat:@"SELECT * FROM COLLECTIONINFO WHERE URL = '%@'",item.url];
     if (sqlite3_prepare_v2(sqlDbInstance.db, [selectSql UTF8String], -1, &statement, NULL) == SQLITE_OK) {
         if (sqlite3_step(statement) == SQLITE_ROW) {
+            Collection *info = [[Collection alloc] init];
+            char *c_id = (char *)sqlite3_column_text(statement, 0);
+            info.cId = [NSString stringWithUTF8String:c_id];
+            
+            char *c_title = (char *) sqlite3_column_text(statement, 1);
+            info.title = [NSString stringWithUTF8String:c_title];
+            
+            char *c_url = (char *) sqlite3_column_text(statement, 2);
+            info.url = [NSString stringWithUTF8String:c_url];
+            
+            char *c_date = (char *) sqlite3_column_text(statement, 3);
+            info.publishDate = [NSString stringWithUTF8String:c_date];
+            
+            int length = sqlite3_column_bytes(statement, 4);
+            info.imgData = [NSData dataWithBytes:sqlite3_column_blob(statement, 4) length:length];
             sqlite3_finalize(statement);
             sqlite3_close(sqlDbInstance.db);
-            return YES;
+            return info;
         }
     }
     sqlite3_finalize(statement);
     sqlite3_close(sqlDbInstance.db);
-    return false;
+    return nil;
 }
 
 

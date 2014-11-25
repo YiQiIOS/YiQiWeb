@@ -60,7 +60,10 @@
     shareContent = [dict objectForKey:@"content"];
     imageData = [dict objectForKey:@"imageData"];
     shareUrl = [NSString stringWithFormat:@"%@",[dict objectForKey:@"shareUrl"]];
-    imageUrl = [dict objectForKey:@"imageUrl"];
+    if (imageUrl==nil)
+    {
+        imageUrl = [dict objectForKey:@"imageUrl"];
+    }
     NSLog(@"%@",shareContent);
 }
 
@@ -100,11 +103,12 @@
     [JDStatusBarNotification showActivityIndicator:YES indicatorStyle:UIActivityIndicatorViewStyleGray];
     NSLog(@"2313");
     NSString *utf8String = shareUrl;
+   
     NSMutableString*title = [[NSMutableString alloc]initWithString:shareContent];
     NSRange range = NSMakeRange(shareContent.length-shareUrl.length, shareUrl.length);
     [title deleteCharactersInRange:range];
     NSString *description = shareContent;
-    NSLog(@"%@%@",shareUrl,imageUrl);
+    NSLog(@"%@%@",shareUrl,shareContent);
     QQApiNewsObject *newsObj = [QQApiNewsObject
                                 objectWithURL:[NSURL URLWithString:utf8String]
                                 title:title

@@ -18,6 +18,7 @@
 #import <TencentOpenAPI/sdkdef.h>
 #import <TencentOpenAPI/TencentApiInterface.h>
 #import <TencentOpenAPI/TencentOAuthObject.h>
+#import <AVFoundation/AVFoundation.h>
 @interface ShareViewController : UIViewController<UITextViewDelegate>
 {
     TencentOAuth* tencentOAuth;
@@ -26,4 +27,5 @@
 @property(strong,nonatomic)NSString*shareContent;
 @property(strong,nonatomic)NSString*shareKind;
 @property(strong,nonatomic)NSData*imageData;
+@property(strong,nonatomic)NSString*imageUrl;
 @end

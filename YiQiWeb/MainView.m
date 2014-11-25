@@ -61,65 +61,47 @@
     
     [[NSNotificationCenter defaultCenter]removeObserver:self name:@"pushShare" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(pushShare:) name:@"pushShare" object:nil];
+    
+    [[NSNotificationCenter defaultCenter]removeObserver:self name:@"camera" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(camera) name:@"camera" object:nil];
 }
+
+//网络状态变化时触发方法
 -(void)networkChange:(NSNotification*)notification
 {
     Reachability*reachability =(Reachability*)[notification object];
-    //获取当前网络连接状态
-    NetworkStatus status = [reachability currentReachabilityStatus];
-    //
-    NSString*strNetWorkStatus;
-        NSLog(@"%u,%u",[reachability currentReachabilityStatus],[reachability connectionRequired]);
-    if (netFlag==nil)
-    {
-        netFlag = [NSString stringWithFormat:@"%u",[reachability connectionRequired]];
-    }else
-    {
-        if (![netFlag isEqualToString:[NSString stringWithFormat:@"%u",[reachability connectionRequired]]])
-        {
-            if ([reachability currentReachabilityStatus])
-            {
-                NSLog(@"%@,%@",netFlag,errorRequest);
-                [webview loadRequest:errorRequest];
-                UIView*view = (UIView*)[self.view viewWithTag:1003];
-                [view removeFromSuperview];
-            }
-        }
-        netFlag = [NSString stringWithFormat:@"%u",[reachability connectionRequired]];
-    }
-    if (status == NotReachable)
-    {
-        strNetWorkStatus = @"无网络连接,请检查网络";
-        
-    }else if (status == ReachableViaWiFi)
-    {
-        strNetWorkStatus = @"当前正使用wifi网络连接";
-    }else if (status == ReachableViaWWAN)
-    {
-        strNetWorkStatus = @"当前正使用移动蜂窝网络连接";
-    }
+
+//        NSLog(@"%u,%u",[reachability currentReachabilityStatus],[reachability connectionRequired]);
+
     //生成警示框,网络环境发生变化时弹出
     if ([reachability connectionRequired]==4)
     {
-        UIAlertView*alert = [[UIAlertView alloc]initWithTitle:@"提示" message:strNetWorkStatus delegate:nil cancelButtonTitle:@"确定" otherButtonTitles:@"取消", nil];
+        UIAlertView*alert = [[UIAlertView alloc]initWithTitle:nil message:@"无网络连接，请检查网络" delegate:nil cancelButtonTitle:nil otherButtonTitles:nil];
         [alert show];
-    }
-
-}
--(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
-{
-    NSLog(@"dddfhh");
-    if ([keyPath isEqualToString:@"network"])
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [alert dismissWithClickedButtonIndex:0 animated:YES];
+        });
+    }else
     {
-        NSLog(@"====%@",[change objectForKey:NSKeyValueChangeNewKey]);
+        if (netFlag!=nil&&![netFlag isEqualToString:[NSString stringWithFormat:@"%u",[reachability connectionRequired]]])
+        {
+            [webview loadRequest:errorRequest];
+            UIView*view = (UIView*)[self.view viewWithTag:1003];
+            [view removeFromSuperview];
+        }
+        
     }
+    netFlag = [NSString stringWithFormat:@"%u",[reachability connectionRequired]];
+
 }
 
+//进入收藏页面
 -(void)pushCollections
 {
     CollectionsViewController *viewController = [[CollectionsViewController alloc] initWithNibName:@"CollectionsViewController" bundle:nil];
     [self.navigationController pushViewController:viewController animated:YES];
 }
+//进入分享页面
 -(void)pushShare:(NSNotification*)notif
 {
     ShareViewController*shareView = [[ShareViewController alloc]init];
@@ -128,6 +110,13 @@
     
     shareView.imageData = item.imgData;
     [self.navigationController pushViewController:shareView animated:YES];
+    
+}
+//进入扫一扫界面
+-(void)camera
+{
+    CameraView*cameraView = [[CameraView alloc]init];
+    [self.navigationController pushViewController:cameraView animated:YES];
     
 }
 //webview加载结束调用的代理
@@ -152,12 +141,8 @@
 //        self.navigationController.navigationBarHidden = YES;
         self.navigationItem.leftBarButtonItem = nil;
     }
-    UIView*view = (UIView*)[self.view viewWithTag:1003];
+    ReminderView *view = [ReminderView reminderView];
     [view removeFromSuperview];
-    UIActivityIndicatorView*indicator = (UIActivityIndicatorView*)[self.view viewWithTag:1001];
-    [indicator stopAnimating];
-    UILabel*label = (UILabel*)[self.view viewWithTag:1002];
-    [label removeFromSuperview];
     
     //显示标题
     [webView stringByEvaluatingJavaScriptFromString:@"var script = document.createElement('script');"
@@ -206,104 +191,16 @@
 -(void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
     
-    UIView*view = (UIView*)[self.view viewWithTag:1003];
-    if (view==nil)
-    {
-        view = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 100, 80)];
-        view.center = CGPointMake([UIScreen mainScreen].bounds.size.width/2, [UIScreen mainScreen].bounds.size.height/2);
-        view.backgroundColor = [UIColor blackColor];
-        view.tag = 1003;
-        view.layer.cornerRadius = 5;
-        view.layer.masksToBounds = YES;
-        view.alpha = 0.7;
-        [self.view addSubview:view];
-    }else
-    {
-        [self.view addSubview:view];
-    }
-    
-    UIAlertView*alert = [[UIAlertView alloc]initWithTitle:@"提醒" message:@"加载失败" delegate:nil cancelButtonTitle:@"确定" otherButtonTitles:nil];
-    [alert show];
-    UIActivityIndicatorView*indicator = (UIActivityIndicatorView*)[view viewWithTag:1001];
-    if (indicator==nil)
-    {
-        indicator = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-        indicator.center = CGPointMake([UIScreen mainScreen].bounds.size.width/2, [UIScreen mainScreen].bounds.size.height/2);
-        [indicator startAnimating];
-        indicator.tag =1001;
-        [view addSubview:indicator];
-    }else
-    {
-        [indicator startAnimating];
-    }
-    
-    UILabel*label = (UILabel*)[view viewWithTag:1002];
-    if (label==nil)
-    {
-        label = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 100, 50)];
-        label.tag = 1002;
-        label.center = CGPointMake([UIScreen mainScreen].bounds.size.width/2, [UIScreen mainScreen].bounds.size.height/2+30);
-        label.text = @"loading";
-        label.textAlignment = NSTextAlignmentCenter;
-        label.font = [UIFont systemFontOfSize:18];
-        label.textColor = [UIColor whiteColor];
-        [view addSubview:label];
-    }else
-    {
-        [view addSubview:label];
-    }
+    ReminderView*view = [ReminderView reminderView];
+    [view addSubview:view];
     
 }
 //webview加载开始调用的代理
 -(void)webViewDidStartLoad:(UIWebView *)webView
 {
-    UIView*view = (UIView*)[self.view viewWithTag:1003];
-    if (view==nil)
-    {
-        view = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 100, 80)];
-        view.center = CGPointMake([UIScreen mainScreen].bounds.size.width/2, [UIScreen mainScreen].bounds.size.height/2);
-        view.backgroundColor = [UIColor blackColor];
-        view.tag = 1003;
-        view.layer.cornerRadius = 5;
-        view.layer.masksToBounds = YES;
-        view.alpha = 0.7;
-        [self.view addSubview:view];
-    }else
-    {
-        [self.view addSubview:view];
-    }
-    UILabel*label = (UILabel*)[view viewWithTag:1002];
-    if (label==nil)
-    {
-        label = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 100, 30)];
-        label.tag = 1002;
-        label.center =CGPointMake(view.bounds.size.width/2, view.bounds.size.height/2+20);
-        label.text = @"loading";
-        label.textAlignment = NSTextAlignmentCenter;
-        label.font = [UIFont systemFontOfSize:18];
-        label.textColor = [UIColor whiteColor];
-//        label.backgroundColor = [UIColor blackColor];
-        label.layer.cornerRadius = 5;
-        label.layer.masksToBounds = YES;
-//        label.alpha = 0.7;
-        [view addSubview:label];
-    }else
-    {
-        [view addSubview:label];
-    }
-    UIActivityIndicatorView*indicator = (UIActivityIndicatorView*)[view viewWithTag:1001];
-    if (indicator==nil)
-    {
-        indicator = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-        indicator.center = CGPointMake(view.bounds.size.width/2, view.bounds.size.height/2-20);
-        [indicator startAnimating];
-        indicator.activityIndicatorViewStyle = UIActivityIndicatorViewStyleWhite;
-        indicator.tag =1001;
-        [view addSubview:indicator];
-    }else
-    {
-        [indicator startAnimating];
-    }
+    ReminderView*view = [ReminderView reminderView];
+    [self.view addSubview:view];
+    
     UIBarButtonItem*moreItem = self.navigationItem.rightBarButtonItem;
     UIButton*btn = (UIButton*)moreItem.customView;
     btn.alpha = 0.4;
